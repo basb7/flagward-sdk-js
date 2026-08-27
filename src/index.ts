@@ -10,4 +10,4 @@ export { useFlag } from "./useFlag";
 export { useFlags } from "./useFlags";
 
 // Types
-export type { Condition, Rule, Flag, FlagMap } from "./types";
+export type { Condition, Rule, Flag, FlagMap, UserContext } from "./types";

@@ -1,19 +1,24 @@
 import { useContext } from "react";
 import { EasyFlagsContext } from "./context";
-import type { FlagMap } from "./types";
+import type { FlagMap, UserContext } from "./types";
 
 interface UseFlagsResult {
   flags: FlagMap;
   isLoading: boolean;
   error: Error | null;
-  getFlag: (key: string) => boolean | string | undefined;
+  getFlag: (key: string, flagContext?: UserContext) => boolean | string | undefined;
 }
 
 export function useFlags(): UseFlagsResult {
   const context = useContext(EasyFlagsContext);
 
-  const getFlag = (key: string): boolean | string | undefined => {
-    return context.flags[key];
+  const getFlag = (key: string, flagContext?: UserContext): boolean | string | undefined => {
+    const mergedContext = { ...context.context, ...flagContext };
+    try {
+      return context.client?.evaluate(key, mergedContext);
+    } catch {
+      return undefined;
+    }
   };
 
   return {

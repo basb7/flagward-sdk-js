@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
 import { EasyFlagsClient } from "./client";
 import { EasyFlagsContext, type EasyFlagsContextValue } from "./context";
-import type { FlagMap } from "./types";
+import type { FlagMap, UserContext } from "./types";
 
 interface EasyFlagsProviderProps {
   apiKey: string;
   host?: string;
-  environment?: string;
+  context?: UserContext;
   children: React.ReactNode;
 }
 
 export function EasyFlagsProvider({
   apiKey,
   host,
-  environment,
+  context: userContext = {},
   children,
 }: EasyFlagsProviderProps) {
   const [client] = useState(
-    () => new EasyFlagsClient({ apiKey, host, environment })
+    () => new EasyFlagsClient({ apiKey, host })
   );
   const [flags, setFlags] = useState<FlagMap>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -27,8 +27,7 @@ export function EasyFlagsProvider({
     const initClient = async () => {
       try {
         await client.init();
-        const newFlags = await client.getFlags();
-        setFlags(newFlags);
+        setFlags(client.cachedFlags);
         client.connect();
       } catch (err) {
         setError(err instanceof Error ? err : new Error(String(err)));
@@ -54,6 +53,7 @@ export function EasyFlagsProvider({
     flags,
     isLoading,
     error,
+    context: userContext,
   };
 
   return (

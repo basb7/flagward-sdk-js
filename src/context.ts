@@ -1,12 +1,13 @@
 import { createContext } from "react";
 import { EasyFlagsClient } from "./client";
-import type { FlagMap } from "./types";
+import type { FlagMap, UserContext } from "./types";
 
 export interface EasyFlagsContextValue {
   client: EasyFlagsClient | null;
   flags: FlagMap;
   isLoading: boolean;
   error: Error | null;
+  context: UserContext;
 }
 
 export const EasyFlagsContext = createContext<EasyFlagsContextValue>({
@@ -14,4 +15,5 @@ export const EasyFlagsContext = createContext<EasyFlagsContextValue>({
   flags: {},
   isLoading: false,
   error: null,
+  context: {},
 });

@@ -18,9 +18,12 @@ export interface Flag {
   rules: Rule[];
 }
 
-export interface FlagValue {
+export interface FlagData {
   key: string;
-  value: boolean | string;
+  is_enabled: boolean;
+  rules: Rule[];
 }
 
 export type FlagMap = Record<string, boolean | string>;
+export type FlagDataMap = Record<string, FlagData>;
+export type UserContext = Record<string, unknown>;
