@@ -3,3 +3,6 @@ dist/
 *.tsbuildinfo
 .vitest/
 coverage/
+.idea/
+.vscode/
+.DS_Store
