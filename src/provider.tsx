@@ -1,25 +1,31 @@
 import { useEffect, useState } from "react";
-import { EasyFlagsClient } from "./client";
-import { EasyFlagsContext, type EasyFlagsContextValue } from "./context";
-import type { FlagMap, UserContext } from "./types";
+import { FlagwardClient } from "./client";
+import { FlagwardContext, type FlagwardContextValue } from "./context";
+import type { LogLevel } from "./logger";
+import type { FlagDataMap, UserContext } from "./types";
 
-interface EasyFlagsProviderProps {
+export interface FlagwardProviderProps {
   apiKey: string;
   host?: string;
   context?: UserContext;
+  /** How much the SDK reports to the console. Defaults to "warn". */
+  logLevel?: LogLevel;
   children: React.ReactNode;
 }
 
-export function EasyFlagsProvider({
+export function FlagwardProvider({
   apiKey,
   host,
   context: userContext = {},
+  logLevel,
   children,
-}: EasyFlagsProviderProps) {
+}: FlagwardProviderProps) {
   const [client] = useState(
-    () => new EasyFlagsClient({ apiKey, host })
+    () => new FlagwardClient({ apiKey, host, logLevel })
   );
-  const [flags, setFlags] = useState<FlagMap>({});
+  // The flag data lives in React state, not in the client's mutable field,
+  // so what a hook renders is what triggered the render.
+  const [flagsData, setFlagsData] = useState<FlagDataMap>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -27,19 +33,35 @@ export function EasyFlagsProvider({
     const initClient = async () => {
       try {
         await client.init();
-        setFlags(client.cachedFlags);
-        client.connect();
+        setFlagsData(client.snapshot);
       } catch (err) {
+        // Startup failing is never fatal to the host application: the tree
+        // still renders and every flag reads as undefined, so each caller's
+        // own fallback decides what the user sees.
+        client.logger.warn(
+          "init-failed",
+          "Could not load flags, so every flag falls back to undefined and " +
+            "your own defaults apply. The cause is reported above.",
+        );
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
+        // Outside the try on purpose: a startup that failed is exactly when
+        // the stream and the connectivity watcher matter most, and leaving
+        // them behind the success path meant a client that started offline
+        // could never recover.
+        client.connect();
         setIsLoading(false);
       }
     };
 
     initClient();
 
-    const unsubscribe = client.subscribe((newFlags) => {
-      setFlags(newFlags);
+    const unsubscribe = client.subscribe((snapshot) => {
+      setFlagsData(snapshot);
+      // Flags arriving means the client is talking to the server again. Leaving
+      // a past failure in state would keep every consumer that checks `error`
+      // showing a problem that is over.
+      setError(null);
     });
 
     return () => {
@@ -48,17 +70,17 @@ export function EasyFlagsProvider({
     };
   }, [client]);
 
-  const value: EasyFlagsContextValue = {
+  const value: FlagwardContextValue = {
     client,
-    flags,
+    flagsData,
     isLoading,
     error,
     context: userContext,
   };
 
   return (
-    <EasyFlagsContext.Provider value={value}>
+    <FlagwardContext.Provider value={value}>
       {children}
-    </EasyFlagsContext.Provider>
+    </FlagwardContext.Provider>
   );
 }

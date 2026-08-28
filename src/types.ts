@@ -24,6 +24,13 @@ export interface FlagData {
   rules: Rule[];
 }
 
-export type FlagMap = Record<string, boolean | string>;
+/**
+ * The resolved value of every flag in an environment.
+ *
+ * Boolean today. MULTIVARIATE flags exist in the wire format but are not
+ * evaluated yet, so typing this as `boolean | string` would make every caller
+ * handle a case that cannot occur. It widens when multivariate lands.
+ */
+export type FlagMap = Record<string, boolean>;
 export type FlagDataMap = Record<string, FlagData>;
 export type UserContext = Record<string, unknown>;

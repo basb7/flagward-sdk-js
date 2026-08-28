@@ -1,26 +1,44 @@
 import { useContext } from "react";
-import { EasyFlagsContext } from "./context";
+import { FlagwardContext } from "./context";
+import { evaluateFlag } from "./evaluation";
+import { createLogger } from "./logger";
 import type { UserContext } from "./types";
 
-interface UseFlagResult {
-  value: boolean | string | undefined;
+export interface UseFlagResult {
+  /** The flag's value, or undefined while loading or if it does not exist. */
+  value: boolean | undefined;
   isLoading: boolean;
   error: Error | null;
 }
 
 export function useFlag(key: string, flagContext?: UserContext): UseFlagResult {
-  const context = useContext(EasyFlagsContext);
+  const context = useContext(FlagwardContext);
+  const logger = context.client?.logger ?? createLogger();
 
   // Merge provider context with flag-specific context
   const mergedContext = { ...context.context, ...flagContext };
 
-  let value: boolean | string | undefined;
-  try {
-    if (context.client && !context.isLoading) {
-      value = context.client.evaluate(key, mergedContext);
+  let value: boolean | undefined;
+
+  if (!context.client) {
+    logger.error(
+      "no-provider",
+      `useFlag("${key}") was called outside FlagwardProvider, so it can only ` +
+        "return undefined. Wrap the tree in <FlagwardProvider>.",
+    );
+  } else if (!context.isLoading) {
+    // Evaluated against the data this render was produced from, so the value
+    // shown and the update that caused it can never disagree.
+    value = evaluateFlag(context.flagsData[key], mergedContext);
+
+    if (value === undefined) {
+      logger.warn(
+        `unknown-flag:${key}`,
+        `Flag "${key}" is not in this environment, so it reads as undefined. ` +
+          "Check the key, and that the flag exists in the environment this " +
+          "API key belongs to.",
+      );
     }
-  } catch {
-    // Flag not found
   }
 
   return {

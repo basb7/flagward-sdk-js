@@ -1,7 +1,7 @@
 {
-  "name": "easy-flags-sdk-react",
+  "name": "flagward-sdk-react",
   "version": "0.1.0",
-  "description": "React SDK for Easy Flags - Feature Flags as a Service",
+  "description": "React SDK for Flagward - Feature Flags as a Service",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -19,7 +19,7 @@
     "flags",
     "react",
     "sdk",
-    "easy-flags"
+    "flagward"
   ],
   "author": "",
   "license": "MIT",

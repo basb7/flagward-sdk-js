@@ -1,13 +1,30 @@
 // Client
-export { EasyFlagsClient } from "./client";
-export type { EasyFlagsClientOptions } from "./client";
+export { FlagwardClient } from "./client";
+export type { FlagwardClientOptions } from "./client";
 
 // Provider
-export { EasyFlagsProvider } from "./provider";
+export { FlagwardProvider } from "./provider";
+export type { FlagwardProviderProps } from "./provider";
 
 // Hooks
 export { useFlag } from "./useFlag";
+export type { UseFlagResult } from "./useFlag";
 export { useFlags } from "./useFlags";
+export type { UseFlagsResult } from "./useFlags";
+
+// Evaluation, for callers that resolve a flag outside React
+export { evaluateFlag, toFlagMap } from "./evaluation";
+
+// Console reporting
+export type { LogLevel, Logger } from "./logger";
 
 // Types
-export type { Condition, Rule, Flag, FlagMap, UserContext } from "./types";
+export type {
+  Condition,
+  Flag,
+  FlagData,
+  FlagDataMap,
+  FlagMap,
+  Rule,
+  UserContext,
+} from "./types";

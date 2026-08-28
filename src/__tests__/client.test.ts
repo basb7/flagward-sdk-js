@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { EasyFlagsClient } from "../client";
+import { FlagwardClient } from "../client";
 
-describe("EasyFlagsClient", () => {
-  let client: EasyFlagsClient;
+describe("FlagwardClient", () => {
+  let client: FlagwardClient;
 
   beforeEach(() => {
-    client = new EasyFlagsClient({
+    client = new FlagwardClient({
       apiKey: "test-key",
       host: "http://localhost:8000",
     });

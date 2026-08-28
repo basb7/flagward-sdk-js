@@ -1,18 +1,19 @@
 import { createContext } from "react";
-import { EasyFlagsClient } from "./client";
-import type { FlagMap, UserContext } from "./types";
+import { FlagwardClient } from "./client";
+import type { FlagDataMap, UserContext } from "./types";
 
-export interface EasyFlagsContextValue {
-  client: EasyFlagsClient | null;
-  flags: FlagMap;
+export interface FlagwardContextValue {
+  client: FlagwardClient | null;
+  /** The flag data this render was produced from. */
+  flagsData: FlagDataMap;
   isLoading: boolean;
   error: Error | null;
   context: UserContext;
 }
 
-export const EasyFlagsContext = createContext<EasyFlagsContextValue>({
+export const FlagwardContext = createContext<FlagwardContextValue>({
   client: null,
-  flags: {},
+  flagsData: {},
   isLoading: false,
   error: null,
   context: {},
