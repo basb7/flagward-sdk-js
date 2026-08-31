@@ -1,6 +1,6 @@
-import { evaluateFlag } from "./evaluation";
-import { createLogger, type LogLevel, type Logger } from "./logger";
-import type { Flag, FlagDataMap, FlagMap, UserContext } from "./types";
+import { evaluateFlag } from "./evaluation.js";
+import { createLogger, type LogLevel, type Logger } from "./logger.js";
+import type { Flag, FlagDataMap, FlagMap, UserContext } from "./types.js";
 
 export interface FlagwardClientOptions {
   apiKey: string;

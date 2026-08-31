@@ -7,7 +7,7 @@
  * a state update while the value comes from somewhere else, and the two can
  * disagree without anything reporting it.
  */
-import type { Condition, FlagData, FlagMap, Rule, UserContext } from "./types";
+import type { Condition, FlagData, FlagMap, Rule, UserContext } from "./types.js";
 
 function evaluateCondition(condition: Condition, context: UserContext): boolean {
   const attributeValue = context[condition.attribute];
