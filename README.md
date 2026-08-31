@@ -144,7 +144,7 @@ re-renders a hundred times does not produce a hundred lines.
 
 Use the client directly without React:
 
-```tsx
+```ts
 import { FlagwardClient } from "flagward-sdk-react";
 
 const client = new FlagwardClient({
@@ -154,15 +154,30 @@ const client = new FlagwardClient({
 
 await client.init();
 
-// All flags evaluated for this environment, from the local snapshot.
+// Every flag's configured on/off state, from the local snapshot.
+// Targeting rules are NOT applied here -- there is no user context to
+// apply them against.
 const flags = client.cachedFlags;
 
-// Or a single flag by key (never throws; returns undefined if unknown).
-const showBanner = client.getFlag("show-banner");
+// One flag with targeting rules applied against the context you pass.
+// Throws if the key does not exist in this environment.
+const showBanner = client.evaluate("show-banner", { plan: "premium" });
+
+// The same, without context and without throwing: an unknown key reads
+// as undefined and your own fallback decides what happens.
+const maintenance = client.getFlag("maintenance-mode");
 
 // Optional: keep the snapshot fresh via the SSE stream.
 client.connect();
+
+// Close it when you are done -- an open stream holds a connection.
+client.disconnect();
 ```
+
+`cachedFlags` and `evaluate` answer different questions. The first says how a
+flag is configured; the second says what it resolves to for a particular user.
+Reaching for `cachedFlags` when you meant `evaluate` silently ignores every
+targeting rule on the flag.
 
 ## License
 
