@@ -1,8 +1,8 @@
 import { useContext } from "react";
-import { FlagwardContext } from "./context";
-import { evaluateFlag, toFlagMap } from "./evaluation";
-import { createLogger } from "./logger";
-import type { FlagMap, UserContext } from "./types";
+import { FlagwardContext } from "./context.js";
+import { evaluateFlag, toFlagMap } from "./evaluation.js";
+import { createLogger } from "./logger.js";
+import type { FlagMap, UserContext } from "./types.js";
 
 export interface UseFlagsResult {
   flags: FlagMap;

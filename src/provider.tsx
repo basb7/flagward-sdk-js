@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { FlagwardClient } from "./client";
-import { FlagwardContext, type FlagwardContextValue } from "./context";
-import type { LogLevel } from "./logger";
-import type { FlagDataMap, UserContext } from "./types";
+import { FlagwardClient } from "./client.js";
+import { FlagwardContext, type FlagwardContextValue } from "./context.js";
+import type { LogLevel } from "./logger.js";
+import type { FlagDataMap, UserContext } from "./types.js";
 
 export interface FlagwardProviderProps {
   apiKey: string;

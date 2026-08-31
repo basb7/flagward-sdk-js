@@ -28,6 +28,34 @@ function Dashboard() {
 }
 ```
 
+## Module format
+
+This package ships as **ESM only** (`"type": "module"`, with an `exports` map
+pointing at `dist/index.js`). It has no CommonJS build: `require("flagward-sdk-react")`
+fails with a clear `ERR_PACKAGE_PATH_NOT_EXPORTED`/`ERR_REQUIRE_ESM` error
+rather than silently loading broken code. Next.js, Vite, and any other
+bundler-based toolchain resolve ESM packages natively, which covers the
+realistic ways a React SDK gets consumed. If you have a pure CommonJS
+build pipeline with no ESM support, `import()` the package dynamically or
+open an issue.
+
+## How flags are evaluated
+
+This SDK evaluates **locally, in the browser**. On startup it downloads the
+full set of flags and their targeting rules for the environment your API key
+belongs to, then evaluates each flag against the rules on the client. A
+Server-Sent Events (SSE) stream keeps that local copy fresh as flags change on
+the server, without a page reload (see "Losing the network" below for what
+happens when that stream drops).
+
+This has a direct consequence you must know before writing a targeting rule:
+**the rules are visible in the browser.** Anything you put in a rule
+(condition values, user attribute names, percentages, etc.) is downloaded as
+plain JSON to every client and can be read by opening devtools. Do not encode
+secrets, internal identifiers you don't want exposed, or anything
+security-sensitive in a flag's targeting rules — treat them the same way you'd
+treat any other client-side configuration.
+
 ## Hooks
 
 ### `useFlag(key)`
@@ -116,7 +144,7 @@ re-renders a hundred times does not produce a hundred lines.
 
 Use the client directly without React:
 
-```tsx
+```ts
 import { FlagwardClient } from "flagward-sdk-react";
 
 const client = new FlagwardClient({
@@ -125,8 +153,31 @@ const client = new FlagwardClient({
 });
 
 await client.init();
-const flags = await client.getFlags();
+
+// Every flag's configured on/off state, from the local snapshot.
+// Targeting rules are NOT applied here -- there is no user context to
+// apply them against.
+const flags = client.cachedFlags;
+
+// One flag with targeting rules applied against the context you pass.
+// Throws if the key does not exist in this environment.
+const showBanner = client.evaluate("show-banner", { plan: "premium" });
+
+// The same, without context and without throwing: an unknown key reads
+// as undefined and your own fallback decides what happens.
+const maintenance = client.getFlag("maintenance-mode");
+
+// Optional: keep the snapshot fresh via the SSE stream.
+client.connect();
+
+// Close it when you are done -- an open stream holds a connection.
+client.disconnect();
 ```
+
+`cachedFlags` and `evaluate` answer different questions. The first says how a
+flag is configured; the second says what it resolves to for a particular user.
+Reaching for `cachedFlags` when you meant `evaluate` silently ignores every
+targeting rule on the flag.
 
 ## License
 
