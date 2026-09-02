@@ -1,8 +1,7 @@
 import { useContext } from "react";
 import { FlagwardContext } from "./context.js";
-import { evaluateFlag } from "./evaluation.js";
-import { createLogger } from "./logger.js";
-import type { UserContext } from "./types.js";
+import { createLogger, evaluateFlag } from "@flagward/core";
+import type { UserContext } from "@flagward/core";
 
 export interface UseFlagResult {
   /** The flag's value, or undefined while loading or if it does not exist. */

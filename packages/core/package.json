@@ -1,0 +1,50 @@
+{
+  "name": "@flagward/core",
+  "version": "0.1.0",
+  "description": "Framework-agnostic core for the Flagward SDKs: client, rule evaluation, and reporting",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "keywords": [
+    "feature-flags",
+    "flags",
+    "sdk",
+    "flagward"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/basb7/flagward-sdk-js.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/basb7/flagward-sdk-js/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/basb7/flagward-sdk-js/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "jsdom": "^25.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { FlagwardClient } from "./client.js";
+import { FlagwardClient } from "@flagward/core";
+import type { FlagDataMap, LogLevel, UserContext } from "@flagward/core";
 import { FlagwardContext, type FlagwardContextValue } from "./context.js";
-import type { LogLevel } from "./logger.js";
-import type { FlagDataMap, UserContext } from "./types.js";
+import { SDK_VERSION } from "./version.js";
 
 export interface FlagwardProviderProps {
   apiKey: string;
@@ -21,7 +21,7 @@ export function FlagwardProvider({
   children,
 }: FlagwardProviderProps) {
   const [client] = useState(
-    () => new FlagwardClient({ apiKey, host, logLevel })
+    () => new FlagwardClient({ apiKey, host, logLevel, sdkVersion: SDK_VERSION })
   );
   // The flag data lives in React state, not in the client's mutable field,
   // so what a hook renders is what triggered the render.

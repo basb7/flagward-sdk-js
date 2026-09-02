@@ -1,6 +1,6 @@
 import { createContext } from "react";
-import { FlagwardClient } from "./client.js";
-import type { FlagDataMap, UserContext } from "./types.js";
+import { FlagwardClient } from "@flagward/core";
+import type { FlagDataMap, UserContext } from "@flagward/core";
 
 export interface FlagwardContextValue {
   client: FlagwardClient | null;

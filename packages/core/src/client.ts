@@ -1,6 +1,7 @@
 import { evaluateFlag } from "./evaluation.js";
 import { createLogger, type LogLevel, type Logger } from "./logger.js";
 import type { Flag, FlagDataMap, FlagMap, UserContext } from "./types.js";
+import { SDK_TYPE, SDK_VERSION } from "./version.js";
 
 export interface FlagwardClientOptions {
   apiKey: string;
@@ -8,12 +9,19 @@ export interface FlagwardClientOptions {
   timeout?: number;
   /** How much the SDK reports to the console. Defaults to "warn". */
   logLevel?: LogLevel;
+  /**
+   * The version reported at registration. A framework adapter passes its own,
+   * so the dashboard shows the version the application actually installed
+   * rather than the core's.
+   */
+  sdkVersion?: string;
 }
 
 export class FlagwardClient {
   private apiKey: string;
   private host: string;
   private timeout: number;
+  private sdkVersion: string;
   private flagsData: FlagDataMap = {};
   private registered = false;
   private initialized = false;
@@ -27,6 +35,7 @@ export class FlagwardClient {
     this.apiKey = options.apiKey;
     this.host = options.host || "http://localhost:8000";
     this.timeout = options.timeout || 10000;
+    this.sdkVersion = options.sdkVersion || SDK_VERSION;
     this.logger = createLogger(options.logLevel);
 
     if (!this.apiKey) {
@@ -111,8 +120,8 @@ export class FlagwardClient {
     await this.request("/sdk/register/", {
       method: "POST",
       body: JSON.stringify({
-        sdk_type: "REACT",
-        version: "0.1.0",
+        sdk_type: SDK_TYPE,
+        version: this.sdkVersion,
       }),
     });
 
@@ -287,6 +296,18 @@ export class FlagwardClient {
   }
 
   private openStream(): void {
+    // Server rendering, React Native and plain Node have no EventSource. The
+    // rest of the SDK works there — flags are read once over fetch — so this
+    // is a missing capability to report, not a reason to throw.
+    if (typeof EventSource === "undefined") {
+      this.logger.warn(
+        "no-eventsource",
+        "This environment has no EventSource, so live updates are off. Flags " +
+          "keep the values they were last read with.",
+      );
+      return;
+    }
+
     if (this.eventSource) {
       this.eventSource.close();
     }
