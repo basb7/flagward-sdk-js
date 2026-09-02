@@ -57,6 +57,16 @@ npm publish -w @flagward/core
 npm publish -w flagward-sdk-react
 ```
 
+Each package lints, tests and builds itself through `prepublishOnly` before npm
+packs anything, so neither a failing suite nor a stale `dist` can reach the
+registry. `npm publish` does not build on its own, and `files` ships whatever
+`dist` happens to hold — which is how old code goes out under a new version
+number without anything failing.
+
+A published version is permanent. `npm unpublish` works for 72 hours and burns
+the number either way, so a mistake ships as a patch release, never as a fix to
+the version that carried it.
+
 Each package reports its own version at registration, and `src/version.ts` is
 generated from `package.json` before every build, so bumping the manifest is
 the whole change. A test in each package compares the two, so a file edited by

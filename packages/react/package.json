@@ -21,7 +21,8 @@
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "prepublishOnly": "npm run build --prefix ../core && npm run lint && npm run test:run && npm run build"
   },
   "keywords": [
     "feature-flags",
