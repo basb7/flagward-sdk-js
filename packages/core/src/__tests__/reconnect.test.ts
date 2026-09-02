@@ -165,59 +165,6 @@ describe("recovering from a network interruption", () => {
   });
 });
 
-describe("the reported error clears on recovery", () => {
-  it("does not leave a past failure in place once flags arrive", async () => {
-    resetLoggerState();
-    FakeEventSource.instances = [];
-    vi.spyOn(console, "warn").mockImplementation(() => {});
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    vi.stubGlobal("EventSource", FakeEventSource);
-
-    let online = false;
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (url: string) => {
-        if (!online) throw new TypeError("Failed to fetch");
-        return {
-          ok: true,
-          status: 200,
-          json: async () =>
-            String(url).includes("/sdk/flags/") ? flagResponse(true) : { status: "ok" },
-        };
-      }),
-    );
-
-    const { render, screen } = await import("@testing-library/react");
-    const { FlagwardProvider } = await import("../provider");
-    const { useFlag } = await import("../useFlag");
-
-    function Probe() {
-      const { error } = useFlag("beta");
-      return <p>error: {error ? "yes" : "no"}</p>;
-    }
-
-    const view = render(
-      <FlagwardProvider apiKey="key">
-        <Probe />
-      </FlagwardProvider>,
-    );
-
-    await vi.waitFor(() => expect(screen.getByText("error: yes")).toBeDefined());
-
-    online = true;
-    window.dispatchEvent(new Event("online"));
-
-    await vi.waitFor(() => expect(screen.getByText("error: no")).toBeDefined());
-
-    // Unmounted explicitly: the provider destroys its client on the way out,
-    // and a client left alive keeps listening on the shared document, waking
-    // up during later tests.
-    view.unmount();
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-  });
-});
-
 describe("returning to a tab that was in the background", () => {
   let visible: boolean;
   let enabled: boolean;
@@ -305,5 +252,53 @@ describe("returning to a tab that was in the background", () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(fetchMock.mock.calls.length).toBe(before);
+  });
+});
+
+describe("an environment without EventSource", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  // Server rendering, React Native and plain Node have no EventSource. The
+  // client guards `window` and `document` but used to call the constructor
+  // unguarded, so connecting threw where the rest of the SDK works fine.
+  it("connects without throwing, and says why live updates are off", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal("EventSource", undefined);
+    resetLoggerState();
+
+    const client = new FlagwardClient({ apiKey: "key" });
+
+    expect(() => client.connect()).not.toThrow();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("no EventSource"),
+    );
+
+    client.destroy();
+  });
+
+  it("still serves the flags it already read", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal("EventSource", undefined);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => ({
+        ok: true,
+        status: 200,
+        json: async () =>
+          String(url).includes("/sdk/flags/") ? flagResponse(true) : { status: "ok" },
+      })),
+    );
+    resetLoggerState();
+
+    const client = new FlagwardClient({ apiKey: "key" });
+    await client.init();
+    client.connect();
+
+    expect(client.getFlag("beta")).toBe(true);
+
+    client.destroy();
   });
 });

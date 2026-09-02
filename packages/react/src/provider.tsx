@@ -1,8 +1,18 @@
 import { useEffect, useState } from "react";
-import { FlagwardClient } from "./client.js";
+import { FlagwardClient } from "@flagward/core";
+import type { FlagDataMap, LogLevel, UserContext } from "@flagward/core";
 import { FlagwardContext, type FlagwardContextValue } from "./context.js";
-import type { LogLevel } from "./logger.js";
-import type { FlagDataMap, UserContext } from "./types.js";
+import { SDK_VERSION } from "./version.js";
+
+/**
+ * How this adapter names itself at registration.
+ *
+ * Not yet one of the server's stored choices, which is why the dashboard shows
+ * it as its own row rather than folding it into JavaScript. It is named here
+ * so that, once the server records adapters, a React application is already
+ * distinguishable from a Vue one without changing what anybody has installed.
+ */
+const SDK_TYPE = "REACT";
 
 export interface FlagwardProviderProps {
   apiKey: string;
@@ -21,7 +31,13 @@ export function FlagwardProvider({
   children,
 }: FlagwardProviderProps) {
   const [client] = useState(
-    () => new FlagwardClient({ apiKey, host, logLevel })
+    () => new FlagwardClient({
+      apiKey,
+      host,
+      logLevel,
+      sdkType: SDK_TYPE,
+      sdkVersion: SDK_VERSION,
+    })
   );
   // The flag data lives in React state, not in the client's mutable field,
   // so what a hook renders is what triggered the render.

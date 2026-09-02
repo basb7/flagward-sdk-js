@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { FlagwardContext } from "../context";
 import { FlagwardProvider } from "../provider";
-import { resetLoggerState } from "../logger";
+import { resetLoggerState } from "@flagward/core";
 import { useFlag } from "../useFlag";
 
 /** Minimal EventSource stand-in: jsdom has none, and the test drives it. */

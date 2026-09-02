@@ -1,0 +1,64 @@
+{
+  "name": "flagward-sdk-react",
+  "version": "0.2.0",
+  "description": "React SDK for Flagward - Feature Flags as a Service",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "node ../../scripts/sync-version.mjs",
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "prepublishOnly": "npm run build --prefix ../core && npm run lint && npm run test:run && npm run build"
+  },
+  "keywords": [
+    "feature-flags",
+    "flags",
+    "react",
+    "sdk",
+    "flagward"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/basb7/flagward-sdk-js.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/basb7/flagward-sdk-js/tree/main/packages/react#readme",
+  "bugs": {
+    "url": "https://github.com/basb7/flagward-sdk-js/issues"
+  },
+  "dependencies": {
+    "@flagward/core": "^0.1.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.1.0",
+    "jsdom": "^25.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import { FlagwardClient } from "../client";
+import { FlagwardClient, resetLoggerState } from "@flagward/core";
 import { FlagwardProvider } from "../provider";
-import { resetLoggerState } from "../logger";
 import { useFlag } from "../useFlag";
 import { useFlags } from "../useFlags";
 
