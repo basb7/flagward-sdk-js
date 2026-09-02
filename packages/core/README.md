@@ -5,7 +5,7 @@ SDKs for JavaScript: the API client, the rule evaluator, and console reporting.
 
 Use it directly in a plain script, on a server, or in any framework that has no
 adapter yet. If you are writing React, install
-[`flagward-sdk-react`](https://www.npmjs.com/package/flagward-sdk-react)
+[`@flagward/react`](https://www.npmjs.com/package/@flagward/react)
 instead — it re-exports everything here, so you do not need both.
 
 ## Installation

@@ -1,5 +1,5 @@
 {
-  "name": "flagward-sdk-react",
+  "name": "@flagward/react",
   "version": "0.2.0",
   "description": "React SDK for Flagward - Feature Flags as a Service",
   "type": "module",
@@ -40,6 +40,9 @@
   "homepage": "https://github.com/basb7/flagward-sdk-js/tree/main/packages/react#readme",
   "bugs": {
     "url": "https://github.com/basb7/flagward-sdk-js/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@flagward/core": "^0.1.0"
