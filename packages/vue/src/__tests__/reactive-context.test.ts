@@ -84,6 +84,33 @@ describe("a context that changes while the component is mounted", () => {
     wrapper.unmount();
   });
 
+  // Mutating a property of the ref's object, rather than replacing the object.
+  // A different reactivity path: ref() makes its object value reactive, so the
+  // spread inside the computed has to track the property it read.
+  it("re-evaluates when a property of the ref's object is mutated", async () => {
+    const ctx = ref({ plan: "standard" });
+
+    const Probe = defineComponent({
+      setup() {
+        const { value } = useFlag("beta", ctx);
+        return () => h("p", String(value.value));
+      },
+    });
+
+    const wrapper = mount(Probe, {
+      global: { plugins: [flagward({ apiKey: "key" })] },
+    });
+
+    await vi.waitFor(() => expect(wrapper.text()).toBe("false"));
+
+    ctx.value.plan = "pro";
+    await nextTick();
+
+    expect(wrapper.text()).toBe("true");
+
+    wrapper.unmount();
+  });
+
   it("accepts a getter as well as a ref", async () => {
     const plan = ref("standard");
 
