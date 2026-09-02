@@ -1,0 +1,64 @@
+import { computed, inject, type ComputedRef } from "vue";
+import {
+  createLogger,
+  evaluateFlag,
+  toFlagMap,
+  type FlagMap,
+  type UserContext,
+} from "@flagward/core";
+import { FLAGWARD } from "./context.js";
+
+export interface UseFlagsResult {
+  flags: ComputedRef<FlagMap>;
+  isLoading: ComputedRef<boolean>;
+  error: ComputedRef<Error | null>;
+  /** Resolve one flag, optionally against attributes this call adds. */
+  getFlag: (key: string, flagContext?: UserContext) => boolean | undefined;
+}
+
+export function useFlags(): UseFlagsResult {
+  const state = inject(FLAGWARD, null);
+
+  if (!state) {
+    createLogger().error(
+      "no-plugin",
+      "useFlags() was called in an application that never installed the " +
+        "plugin, so it can only return an empty set. Add " +
+        "app.use(flagward({ apiKey })) before mounting.",
+    );
+
+    return {
+      flags: computed(() => ({})),
+      isLoading: computed(() => false),
+      error: computed(() => null),
+      getFlag: () => undefined,
+    };
+  }
+
+  const logger = state.client.logger;
+
+  const getFlag = (key: string, flagContext?: UserContext): boolean | undefined => {
+    const resolved = evaluateFlag(state.flagsData.value[key], {
+      ...state.context,
+      ...flagContext,
+    });
+
+    if (resolved === undefined) {
+      logger.warn(
+        `unknown-flag:${key}`,
+        `Flag "${key}" is not in this environment, so it reads as undefined. ` +
+          "Check the key, and that the flag exists in the environment this " +
+          "API key belongs to.",
+      );
+    }
+
+    return resolved;
+  };
+
+  return {
+    flags: computed(() => toFlagMap(state.flagsData.value, state.context)),
+    isLoading: computed(() => state.isLoading.value),
+    error: computed(() => state.error.value),
+    getFlag,
+  };
+}
