@@ -8,7 +8,7 @@ adapter per framework.
 | Package | npm | What it is |
 | --- | --- | --- |
 | [`packages/core`](packages/core) | `@flagward/core` | The client, the rule evaluator, and console reporting. No framework, no DOM framework assumptions beyond the browser APIs it guards. |
-| [`packages/react`](packages/react) | `flagward-sdk-react` | The React adapter: a provider, `useFlag` and `useFlags`. |
+| [`packages/react`](packages/react) | `@flagward/react` | The React adapter: a provider, `useFlag` and `useFlags`. |
 
 ## Why a core
 
@@ -39,7 +39,7 @@ A single package:
 
 ```bash
 npm run build -w @flagward/core
-npm run test:run -w flagward-sdk-react
+npm run test:run -w @flagward/react
 ```
 
 An adapter resolves `@flagward/core` from its built `dist/`, not from source,
@@ -54,7 +54,7 @@ the registry yet.
 
 ```bash
 npm publish -w @flagward/core
-npm publish -w flagward-sdk-react
+npm publish -w @flagward/react
 ```
 
 Each package lints, tests and builds itself through `prepublishOnly` before npm
@@ -66,6 +66,19 @@ number without anything failing.
 A published version is permanent. `npm unpublish` works for 72 hours and burns
 the number either way, so a mistake ships as a patch release, never as a fix to
 the version that carried it.
+
+The read path lags the write path. A first publish under a new scope returns
+`PUT 200` while `npm install` still answers 404, because installs resolve the
+package document and that propagates behind the version manifest. Wait for
+`https://registry.npmjs.org/@flagward%2F<name>` to answer 200 before publishing
+anything that depends on it — the dependency resolves through the same
+document, so an adapter published too early is uninstallable.
+
+### The React adapter's old name
+
+It shipped as `flagward-sdk-react` up to 0.2.0, before this org existed, and is
+now deprecated in favour of `@flagward/react`. Every SDK here lives in a scope
+the project owns, so nobody else can publish a name that looks official.
 
 Each package reports its own version at registration, and `src/version.ts` is
 generated from `package.json` before every build, so bumping the manifest is

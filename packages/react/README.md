@@ -1,17 +1,22 @@
-# flagward-sdk-react
+# @flagward/react
 
 React SDK for Flagward - Feature Flags as a Service
+
+> Published as `flagward-sdk-react` up to 0.2.0. Same package, same API — it
+> moved into the `@flagward` scope so every SDK in this family shares one
+> namespace the project actually owns. Change the name in your `package.json`
+> and the import; nothing else.
 
 ## Installation
 
 ```bash
-npm install flagward-sdk-react
+npm install @flagward/react
 ```
 
 ## Quick Start
 
 ```tsx
-import { FlagwardProvider, useFlag } from "flagward-sdk-react";
+import { FlagwardProvider, useFlag } from "@flagward/react";
 
 function App() {
   return (
@@ -31,7 +36,7 @@ function Dashboard() {
 ## Module format
 
 This package ships as **ESM only** (`"type": "module"`, with an `exports` map
-pointing at `dist/index.js`). It has no CommonJS build: `require("flagward-sdk-react")`
+pointing at `dist/index.js`). It has no CommonJS build: `require("@flagward/react")`
 fails with a clear `ERR_PACKAGE_PATH_NOT_EXPORTED`/`ERR_REQUIRE_ESM` error
 rather than silently loading broken code. Next.js, Vite, and any other
 bundler-based toolchain resolve ESM packages natively, which covers the
@@ -152,7 +157,7 @@ installing this one is enough. Reach for the core directly only outside React.
 Use the client directly without React:
 
 ```ts
-import { FlagwardClient } from "flagward-sdk-react";
+import { FlagwardClient } from "@flagward/react";
 
 const client = new FlagwardClient({
   apiKey: "your-api-key",
