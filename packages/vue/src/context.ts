@@ -1,4 +1,4 @@
-import type { InjectionKey, Ref, ShallowRef } from "vue";
+import type { InjectionKey, MaybeRefOrGetter, Ref, ShallowRef } from "vue";
 import type { FlagDataMap, FlagwardClient, UserContext } from "@flagward/core";
 
 export interface FlagwardState {
@@ -13,7 +13,13 @@ export interface FlagwardState {
   flagsData: ShallowRef<FlagDataMap>;
   isLoading: Ref<boolean>;
   error: Ref<Error | null>;
-  context: UserContext;
+  /**
+   * Held unresolved. The attributes an application targets on -- the plan, the
+   * country, whether anybody is signed in -- change while it runs, so reading
+   * this once at install would answer every later evaluation with what was
+   * true at startup.
+   */
+  context: MaybeRefOrGetter<UserContext>;
 }
 
 /**

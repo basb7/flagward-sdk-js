@@ -1,4 +1,4 @@
-import { computed, inject, type ComputedRef } from "vue";
+import { computed, inject, toValue, type ComputedRef, type MaybeRefOrGetter } from "vue";
 import { createLogger, evaluateFlag, type UserContext } from "@flagward/core";
 import { FLAGWARD } from "./context.js";
 
@@ -9,7 +9,10 @@ export interface UseFlagResult {
   error: ComputedRef<Error | null>;
 }
 
-export function useFlag(key: string, flagContext?: UserContext): UseFlagResult {
+export function useFlag(
+  key: string,
+  flagContext?: MaybeRefOrGetter<UserContext>,
+): UseFlagResult {
   const state = inject(FLAGWARD, null);
 
   if (!state) {
@@ -35,9 +38,13 @@ export function useFlag(key: string, flagContext?: UserContext): UseFlagResult {
     value: computed(() => {
       if (state.isLoading.value) return undefined;
 
+      // Resolved inside the computed, not outside: reading through toValue is
+      // what registers the dependency, so a context that changes re-evaluates
+      // the flag. Spreading a ref instead would copy Vue's internals and drop
+      // every attribute, silently -- the rule simply never matches.
       const resolved = evaluateFlag(state.flagsData.value[key], {
-        ...state.context,
-        ...flagContext,
+        ...toValue(state.context),
+        ...toValue(flagContext),
       });
 
       if (resolved === undefined) {

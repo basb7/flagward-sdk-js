@@ -1,4 +1,4 @@
-import { ref, shallowRef, type App, type Plugin } from "vue";
+import { ref, shallowRef, type App, type MaybeRefOrGetter, type Plugin } from "vue";
 import {
   FlagwardClient,
   type FlagDataMap,
@@ -21,8 +21,13 @@ const SDK_TYPE = "VUE";
 export interface FlagwardPluginOptions {
   apiKey: string;
   host?: string;
-  /** Attributes every flag is evaluated against, unless a call overrides them. */
-  context?: UserContext;
+  /**
+   * Attributes every flag is evaluated against, unless a call overrides them.
+   *
+   * Takes a ref or a getter as readily as a plain object, so the signed-in
+   * user's attributes can be handed over once and stay current.
+   */
+  context?: MaybeRefOrGetter<UserContext>;
   /** How much the SDK reports to the console. Defaults to "warn". */
   logLevel?: LogLevel;
 }

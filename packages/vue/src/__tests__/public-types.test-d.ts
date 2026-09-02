@@ -6,9 +6,11 @@
  * here exists because writing it required importing something from the
  * package root.
  */
+import { ref } from "vue";
 import {
   evaluateFlag,
   flagward,
+  useFlag,
   toFlagMap,
   type FlagData,
   type FlagDataMap,
@@ -54,9 +56,27 @@ void loading;
 void failure;
 
 const everyFlag: FlagMap = flagsResult.flags.value;
-const oneFlag: boolean | undefined = flagsResult.getFlag("beta", { plan: "pro" });
 void everyFlag;
-void oneFlag;
+
+// Context is accepted as a plain object, a ref, or a getter, everywhere it is
+// taken -- a Vue application holds the attributes it targets on reactively.
+const plainContext: boolean | undefined = flagsResult.getFlag("beta", { plan: "pro" });
+const refContext: boolean | undefined = flagsResult.getFlag("beta", ref({ plan: "pro" }));
+const getterContext: boolean | undefined = flagsResult.getFlag("beta", () => ({ plan: "pro" }));
+void plainContext;
+void refContext;
+void getterContext;
+
+declare const fromRef: UseFlagResult;
+void useFlag("beta", ref({ plan: "pro" }));
+void useFlag("beta", () => ({ plan: "pro" }));
+void useFlag("beta", { plan: "pro" });
+void fromRef;
+
+// The plugin takes the same three shapes for the application-wide context.
+void flagward({ apiKey: "key", context: { plan: "pro" } });
+void flagward({ apiKey: "key", context: ref({ plan: "pro" }) });
+void flagward({ apiKey: "key", context: () => ({ plan: "pro" }) });
 
 // Evaluation is usable outside Vue, on data the caller already holds.
 const data: FlagData = { key: "beta", is_enabled: true, rules: [] };

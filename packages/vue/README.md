@@ -84,6 +84,28 @@ Or add to it for one call:
 const { value } = useFlag("beta", { betaTester: true });
 ```
 
+### The context can be reactive
+
+Everywhere a context is taken — the plugin, `useFlag`, `getFlag` — it accepts a
+ref or a getter as readily as a plain object:
+
+```ts
+const user = ref({ plan: "standard" });
+
+const { value } = useFlag("beta", user);
+
+user.value = { plan: "pro" };   // the flag re-evaluates, the DOM updates
+```
+
+```ts
+// Or as a getter, when the attributes come from several sources:
+const { value } = useFlag("beta", () => ({ plan: plan.value, country: geo.country }));
+```
+
+This matters because what an application targets on is not fixed: somebody
+signs in, changes plan, switches locale. A context read once at startup would
+answer every later evaluation with what was true at startup.
+
 Supported operators: `EQUALS`, `NOT_EQUALS`, `GREATER_THAN`, `LESS_THAN`,
 `IN_LIST`, `CONTAINS`, combined with `AND` or `OR`.
 

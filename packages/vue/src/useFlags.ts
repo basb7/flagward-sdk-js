@@ -1,4 +1,4 @@
-import { computed, inject, type ComputedRef } from "vue";
+import { computed, inject, toValue, type ComputedRef, type MaybeRefOrGetter } from "vue";
 import {
   createLogger,
   evaluateFlag,
@@ -13,7 +13,10 @@ export interface UseFlagsResult {
   isLoading: ComputedRef<boolean>;
   error: ComputedRef<Error | null>;
   /** Resolve one flag, optionally against attributes this call adds. */
-  getFlag: (key: string, flagContext?: UserContext) => boolean | undefined;
+  getFlag: (
+    key: string,
+    flagContext?: MaybeRefOrGetter<UserContext>,
+  ) => boolean | undefined;
 }
 
 export function useFlags(): UseFlagsResult {
@@ -37,10 +40,13 @@ export function useFlags(): UseFlagsResult {
 
   const logger = state.client.logger;
 
-  const getFlag = (key: string, flagContext?: UserContext): boolean | undefined => {
+  const getFlag = (
+    key: string,
+    flagContext?: MaybeRefOrGetter<UserContext>,
+  ): boolean | undefined => {
     const resolved = evaluateFlag(state.flagsData.value[key], {
-      ...state.context,
-      ...flagContext,
+      ...toValue(state.context),
+      ...toValue(flagContext),
     });
 
     if (resolved === undefined) {
@@ -56,7 +62,7 @@ export function useFlags(): UseFlagsResult {
   };
 
   return {
-    flags: computed(() => toFlagMap(state.flagsData.value, state.context)),
+    flags: computed(() => toFlagMap(state.flagsData.value, toValue(state.context))),
     isLoading: computed(() => state.isLoading.value),
     error: computed(() => state.error.value),
     getFlag,
