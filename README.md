@@ -42,8 +42,10 @@ npm run build -w @flagward/core
 npm run test:run -w flagward-sdk-react
 ```
 
-`packages/react` resolves `@flagward/core` from its built `dist/`, so build the
-core after changing it or the adapter's tests will run against stale output.
+An adapter resolves `@flagward/core` from its built `dist/`, not from source,
+so linting or testing against a stale one checks code nobody is running and
+against a missing one fails outright. `lint` and `test` build the core first
+rather than leaving that to whoever remembers.
 
 ## Publishing
 

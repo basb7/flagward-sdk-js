@@ -8,7 +8,9 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "prelint": "npm run build -w @flagward/core",
     "lint": "npm run lint --workspaces --if-present",
+    "pretest": "npm run build -w @flagward/core",
     "test": "npm run test:run --workspaces --if-present"
   },
   "license": "MIT",
