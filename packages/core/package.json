@@ -16,6 +16,7 @@
     "dist"
   ],
   "scripts": {
+    "prebuild": "node ../../scripts/sync-version.mjs",
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",

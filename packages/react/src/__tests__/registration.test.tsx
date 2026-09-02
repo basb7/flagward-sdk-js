@@ -36,6 +36,29 @@ describe("the version this adapter registers with", () => {
     view.unmount();
   });
 
+  // Registering as plain JavaScript would make this adapter indistinguishable
+  // from every other one built on the same core.
+  it("registers as REACT, not as the core's default", async () => {
+    resetLoggerState();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal("EventSource", undefined);
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ flags: [] }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const view = render(<FlagwardProvider apiKey="key"><span /></FlagwardProvider>);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string).sdk_type).toBe("REACT");
+
+    view.unmount();
+  });
+
   it("is the version this package publishes", () => {
     const pkg = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf8"));
     expect(SDK_VERSION).toBe(pkg.version);

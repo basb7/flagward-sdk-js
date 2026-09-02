@@ -81,12 +81,16 @@ new FlagwardClient({ apiKey, logLevel: "error" });
 
 ## Registration
 
-The client registers with the server as `JAVASCRIPT`, reporting its version. A
-framework adapter passes its own:
+The client registers as `JAVASCRIPT`, reporting this package's version. A
+framework adapter names itself and reports its own version instead, so the
+dashboard shows what the application actually installed:
 
 ```js
-new FlagwardClient({ apiKey, sdkVersion: "1.2.3" });
+new FlagwardClient({ apiKey, sdkType: "REACT", sdkVersion: "1.2.3" });
 ```
+
+`src/version.ts` is generated from `package.json` at build time, so the version
+that reaches the server is the one that was published.
 
 ## Module format
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { FlagwardClient } from "../client";
+import { DEFAULT_SDK_TYPE, FlagwardClient } from "../client";
 import { SDK_VERSION } from "../version";
 
 function captureRegistration() {
@@ -25,15 +25,22 @@ describe("registering with the server", () => {
     vi.restoreAllMocks();
   });
 
-  // The server stores sdk_type against a closed set of choices, but Django
-  // does not validate choices on save, so an unknown value is accepted and
-  // sits in the analytics as a type nothing else knows about.
-  it("registers as a type the server actually knows", async () => {
+  it("registers as JavaScript when nothing names a type", async () => {
     const fetchMock = captureRegistration();
 
     await new FlagwardClient({ apiKey: "key" }).register();
 
-    expect(bodyOf(fetchMock).sdk_type).toBe("JAVASCRIPT");
+    expect(bodyOf(fetchMock).sdk_type).toBe(DEFAULT_SDK_TYPE);
+  });
+
+  // An adapter names itself so the dashboard can tell a React application from
+  // a Vue one, rather than showing one indistinguishable JavaScript row.
+  it("lets an adapter name its own type", async () => {
+    const fetchMock = captureRegistration();
+
+    await new FlagwardClient({ apiKey: "key", sdkType: "REACT" }).register();
+
+    expect(bodyOf(fetchMock).sdk_type).toBe("REACT");
   });
 
   it("reports this package's own version by default", async () => {

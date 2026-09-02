@@ -1,7 +1,16 @@
 import { evaluateFlag } from "./evaluation.js";
 import { createLogger, type LogLevel, type Logger } from "./logger.js";
 import type { Flag, FlagDataMap, FlagMap, UserContext } from "./types.js";
-import { SDK_TYPE, SDK_VERSION } from "./version.js";
+import { SDK_VERSION } from "./version.js";
+
+/**
+ * The type reported when an adapter does not name its own.
+ *
+ * The server stores sdk_type against a closed set of choices, so a value it
+ * does not know is accepted (Django validates choices on forms, not on save)
+ * and then sits in the analytics as a type nothing else recognises.
+ */
+export const DEFAULT_SDK_TYPE = "JAVASCRIPT";
 
 export interface FlagwardClientOptions {
   apiKey: string;
@@ -15,6 +24,11 @@ export interface FlagwardClientOptions {
    * rather than the core's.
    */
   sdkVersion?: string;
+  /**
+   * The type reported at registration. A framework adapter names itself so the
+   * dashboard can tell one from another. Defaults to DEFAULT_SDK_TYPE.
+   */
+  sdkType?: string;
 }
 
 export class FlagwardClient {
@@ -22,6 +36,7 @@ export class FlagwardClient {
   private host: string;
   private timeout: number;
   private sdkVersion: string;
+  private sdkType: string;
   private flagsData: FlagDataMap = {};
   private registered = false;
   private initialized = false;
@@ -36,6 +51,7 @@ export class FlagwardClient {
     this.host = options.host || "http://localhost:8000";
     this.timeout = options.timeout || 10000;
     this.sdkVersion = options.sdkVersion || SDK_VERSION;
+    this.sdkType = options.sdkType || DEFAULT_SDK_TYPE;
     this.logger = createLogger(options.logLevel);
 
     if (!this.apiKey) {
@@ -120,7 +136,7 @@ export class FlagwardClient {
     await this.request("/sdk/register/", {
       method: "POST",
       body: JSON.stringify({
-        sdk_type: SDK_TYPE,
+        sdk_type: this.sdkType,
         version: this.sdkVersion,
       }),
     });
