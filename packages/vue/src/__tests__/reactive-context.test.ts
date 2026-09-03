@@ -160,6 +160,34 @@ describe("a context that changes while the component is mounted", () => {
     wrapper.unmount();
   });
 
+  // useFlag is covered above. The map useFlags returns has to follow the same
+  // context, or two hooks in one component disagree about the same flag.
+  it("re-evaluates the whole map when the plugin's context changes", async () => {
+    const appContext = ref({ plan: "standard" });
+    let captured: ReturnType<typeof useFlags>;
+
+    const Probe = defineComponent({
+      setup() {
+        captured = useFlags();
+        return () => h("p", String(captured.flags.value.beta));
+      },
+    });
+
+    const wrapper = mount(Probe, {
+      global: { plugins: [flagward({ apiKey: "key", context: appContext })] },
+    });
+
+    await vi.waitFor(() => expect(wrapper.text()).toBe("false"));
+
+    appContext.value.plan = "pro";
+    await nextTick();
+
+    expect(wrapper.text()).toBe("true");
+    expect(captured!.flags.value.beta).toBe(true);
+
+    wrapper.unmount();
+  });
+
   it("resolves a ref context through useFlags too", async () => {
     const appContext = ref({ plan: "pro" });
     let captured: ReturnType<typeof useFlags>;
