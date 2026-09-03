@@ -147,6 +147,84 @@ when what you are evaluating is *not* the current user:
 users.map((u) => <Row key={u.id} badge={getFlag("premium-badge", { plan: u.plan })} />)
 ```
 
+### Putting it together
+
+The user lives in the provider, once:
+
+```tsx
+// providers.tsx
+import { FlagwardProvider } from "@flagward/react";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+
+  return (
+    <FlagwardProvider
+      apiKey={import.meta.env.VITE_FLAGWARD_API_KEY}
+      host="https://flags.example.com"
+      context={{ plan: user.plan, country: user.country, id: user.id }}
+    >
+      {children}
+    </FlagwardProvider>
+  );
+}
+```
+
+Signing in or changing plan re-renders this, and every flag in the application
+follows — you do not tell each component separately.
+
+One decision, one flag:
+
+```tsx
+// Checkout.tsx
+function Checkout() {
+  const { value: newCheckout, isLoading } = useFlag("new-checkout");
+
+  if (isLoading) return <LegacyCheckout />;
+
+  return newCheckout ? <NewCheckout /> : <LegacyCheckout />;
+}
+```
+
+A flag inside a handler, where a hook cannot go:
+
+```tsx
+// CheckoutForm.tsx
+function CheckoutForm() {
+  const { getFlag } = useFlags();
+
+  const handleSubmit = (data: FormData) => {
+    if (getFlag("strict-validation") && !isComplete(data)) {
+      return setError("Every field is required.");
+    }
+    submit(data);
+  };
+
+  return <form onSubmit={handleSubmit}>{/* ... */}</form>;
+}
+```
+
+And the one case for a per-call context — the flag is about each row, not about
+whoever is looking:
+
+```tsx
+// UserTable.tsx
+function UserTable({ users }: { users: User[] }) {
+  const { getFlag } = useFlags();
+
+  return (
+    <tbody>
+      {users.map((u) => (
+        <tr key={u.id}>
+          <td>{u.name}</td>
+          <td>{getFlag("premium-badge", { plan: u.plan }) ? "★" : null}</td>
+        </tr>
+      ))}
+    </tbody>
+  );
+}
+```
+
 ## Provider
 
 Wrap your app with `FlagwardProvider`:
