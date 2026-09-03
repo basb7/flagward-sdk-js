@@ -4,9 +4,10 @@ The framework-agnostic core of the [Flagward](https://github.com/basb7/flagward)
 SDKs for JavaScript: the API client, the rule evaluator, and console reporting.
 
 Use it directly in a plain script, on a server, or in any framework that has no
-adapter yet. If you are writing React, install
-[`@flagward/react`](https://www.npmjs.com/package/@flagward/react)
-instead — it re-exports everything here, so you do not need both.
+adapter yet. If your framework has one, install that instead —
+[`@flagward/react`](https://www.npmjs.com/package/@flagward/react) or
+[`@flagward/vue`](https://www.npmjs.com/package/@flagward/vue) — because each
+re-exports everything here, so you never need both.
 
 ## Installation
 

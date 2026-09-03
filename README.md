@@ -9,6 +9,7 @@ adapter per framework.
 | --- | --- | --- |
 | [`packages/core`](packages/core) | `@flagward/core` | The client, the rule evaluator, and console reporting. No framework, no DOM framework assumptions beyond the browser APIs it guards. |
 | [`packages/react`](packages/react) | `@flagward/react` | The React adapter: a provider, `useFlag` and `useFlags`. |
+| [`packages/vue`](packages/vue) | `@flagward/vue` | The Vue adapter: a plugin, `useFlag` and `useFlags`. |
 
 ## Why a core
 
@@ -39,7 +40,7 @@ A single package:
 
 ```bash
 npm run build -w @flagward/core
-npm run test:run -w @flagward/react
+npm run test:run -w @flagward/vue
 ```
 
 An adapter resolves `@flagward/core` from its built `dist/`, not from source,
@@ -55,6 +56,7 @@ the registry yet.
 ```bash
 npm publish -w @flagward/core
 npm publish -w @flagward/react
+npm publish -w @flagward/vue
 ```
 
 Each package lints, tests and builds itself through `prepublishOnly` before npm
