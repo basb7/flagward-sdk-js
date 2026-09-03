@@ -63,27 +63,166 @@ treat any other client-side configuration.
 
 ## Hooks
 
-### `useFlag(key)`
+### Which one
 
-Evaluates a single flag by key.
+Reach for `useFlag`. One flag, one decision, one hook — it is what most
+components need:
+
+```tsx
+const { value, isLoading } = useFlag("new-checkout");
+```
+
+`useFlags` earns its place in three cases:
+
+- **The keys are not known where you write the code** — a debug panel, an admin
+  view, anything that iterates.
+- **You need a flag where a hook cannot go** — inside an event handler, a
+  callback, a conditional branch. Hooks cannot be conditional; `getFlag` can.
+- **A component reads several flags** and one call reads better than five.
+
+### `useFlag(key, context?)`
+
+Evaluates a single flag.
 
 ```tsx
 const { value, isLoading, error } = useFlag("new-dashboard");
 ```
 
 Returns:
-- `value`: `boolean | string | undefined`
+- `value`: `boolean | undefined` — `undefined` while loading, and for a key
+  this environment does not have
 - `isLoading`: `boolean`
 - `error`: `Error | null`
 
+The optional second argument adds to the provider's context for this call
+only. See "Where context comes from" below, which is the part that surprises
+people.
+
 ### `useFlags()`
 
-Returns all flags and helper functions.
+The whole environment at once.
 
 ```tsx
-const { flags, getFlag, isLoading } = useFlags();
+const { flags, isLoading, error, getFlag } = useFlags();
 
-const showBanner = getFlag("show-banner");
+flags;                              // { "new-checkout": true, ... }
+getFlag("show-banner");             // one flag, the provider's context
+getFlag("show-banner", { plan: "pro" });   // one flag, plus this context
+```
+
+`getFlag` is a plain function, so it can be called anywhere — including places
+a hook cannot go.
+
+### Where context comes from
+
+Targeting rules are evaluated against a context, and there are two places it
+can come from. They are not interchangeable:
+
+```tsx
+<FlagwardProvider context={{ plan: "free" }}>   // who the user is
+useFlag("beta", { plan: "pro" })                // just this call
+```
+
+A context passed to `useFlag` belongs to **that call**. It is not published
+anywhere: another component cannot see it, and `useFlags().flags` resolves its
+map against the provider's context alone. So this is not a contradiction —
+
+```tsx
+const { value } = useFlag("beta", { plan: "pro" });   // true
+const { flags } = useFlags();                          // flags.beta === false
+```
+
+— it is two questions with two answers. The call was told `"pro"`; the map was
+not. Deliberately: if a context passed in one component reached another
+component's hook, you would have an invisible channel between parts of an
+application that share nothing.
+
+**So put the user in the provider.** Plan, country, id, locale — whatever your
+rules target — belongs there, where one answer applies everywhere and follows
+the user through signing in and changing plan. Reach for the per-call context
+when what you are evaluating is *not* the current user:
+
+```tsx
+// A list of users. The flag is asked about each row, not about the viewer.
+users.map((u) => <Row key={u.id} badge={getFlag("premium-badge", { plan: u.plan })} />)
+```
+
+### Putting it together
+
+The user lives in the provider, once:
+
+```tsx
+// providers.tsx
+import { FlagwardProvider } from "@flagward/react";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+
+  return (
+    <FlagwardProvider
+      apiKey={import.meta.env.VITE_FLAGWARD_API_KEY}
+      host="https://flags.example.com"
+      context={{ plan: user.plan, country: user.country, id: user.id }}
+    >
+      {children}
+    </FlagwardProvider>
+  );
+}
+```
+
+Signing in or changing plan re-renders this, and every flag in the application
+follows — you do not tell each component separately.
+
+One decision, one flag:
+
+```tsx
+// Checkout.tsx
+function Checkout() {
+  const { value: newCheckout, isLoading } = useFlag("new-checkout");
+
+  if (isLoading) return <LegacyCheckout />;
+
+  return newCheckout ? <NewCheckout /> : <LegacyCheckout />;
+}
+```
+
+A flag inside a handler, where a hook cannot go:
+
+```tsx
+// CheckoutForm.tsx
+function CheckoutForm() {
+  const { getFlag } = useFlags();
+
+  const handleSubmit = (data: FormData) => {
+    if (getFlag("strict-validation") && !isComplete(data)) {
+      return setError("Every field is required.");
+    }
+    submit(data);
+  };
+
+  return <form onSubmit={handleSubmit}>{/* ... */}</form>;
+}
+```
+
+And the one case for a per-call context — the flag is about each row, not about
+whoever is looking:
+
+```tsx
+// UserTable.tsx
+function UserTable({ users }: { users: User[] }) {
+  const { getFlag } = useFlags();
+
+  return (
+    <tbody>
+      {users.map((u) => (
+        <tr key={u.id}>
+          <td>{u.name}</td>
+          <td>{getFlag("premium-badge", { plan: u.plan }) ? "★" : null}</td>
+        </tr>
+      ))}
+    </tbody>
+  );
+}
 ```
 
 ## Provider

@@ -111,6 +111,20 @@ Supported operators: `EQUALS`, `NOT_EQUALS`, `GREATER_THAN`, `LESS_THAN`,
 
 ## Composables
 
+### Which one
+
+Reach for `useFlag`. One flag, one decision, one composable — it is what most
+components need.
+
+`useFlags` earns its place in three cases:
+
+- **The keys are not known where you write the code** — a debug panel, an admin
+  view, anything that iterates.
+- **You need a flag where a composable cannot go** — inside an event handler, a
+  callback, a conditional branch. Composables run in `setup`; `getFlag` runs
+  whenever you call it.
+- **A component reads several flags** and one call reads better than five.
+
 ### `useFlag(key, context?)`
 
 ```ts
@@ -133,6 +147,110 @@ const { flags, isLoading, error, getFlag } = useFlags();
 flags.value;                          // { "new-checkout": true, ... }
 getFlag("beta");                      // one flag, app context
 getFlag("beta", { plan: "pro" });     // one flag, this context
+```
+
+### Where context comes from
+
+Targeting rules are evaluated against a context, and there are two places it
+can come from. They are not interchangeable:
+
+```ts
+app.use(flagward({ apiKey, context: user }));   // who the user is
+useFlag("beta", { plan: "pro" });               // just this call
+```
+
+A context passed to `useFlag` belongs to **that call**. It is not published
+anywhere: another component cannot see it, and the map `useFlags` returns
+resolves against the plugin's context alone. So this is not a contradiction —
+
+```ts
+const { value } = useFlag("beta", { plan: "pro" });   // true
+const { flags } = useFlags();                          // flags.value.beta === false
+```
+
+— it is two questions with two answers. The call was told `"pro"`; the map was
+not. Deliberately: if a context passed in one component reached another
+component's composable, you would have an invisible channel between parts of an
+application that share nothing.
+
+### Putting it together
+
+The user lives in the plugin, once:
+
+```ts
+// main.ts
+import { createApp, ref } from "vue";
+import { flagward } from "@flagward/vue";
+
+const user = ref({ plan: "free", country: "AR", id: null as string | null });
+
+createApp(App)
+  .use(flagward({
+    apiKey: import.meta.env.VITE_FLAGWARD_API_KEY,
+    host: "https://flags.example.com",
+    context: user,
+  }))
+  .mount("#app");
+
+// Signing in updates the ref, and every flag in the application follows.
+export function signIn(account: Account) {
+  user.value = { plan: account.plan, country: account.country, id: account.id };
+}
+```
+
+One decision, one flag:
+
+```vue
+<!-- Checkout.vue -->
+<script setup lang="ts">
+import { useFlag } from "@flagward/vue";
+
+const { value: newCheckout, isLoading } = useFlag("new-checkout");
+</script>
+
+<template>
+  <LegacyCheckout v-if="isLoading" />
+  <NewCheckout v-else-if="newCheckout" />
+  <LegacyCheckout v-else />
+</template>
+```
+
+A flag inside a handler, where a composable cannot go:
+
+```vue
+<!-- CheckoutForm.vue -->
+<script setup lang="ts">
+import { useFlags } from "@flagward/vue";
+
+const { getFlag } = useFlags();
+
+function onSubmit(data: FormData) {
+  if (getFlag("strict-validation") && !isComplete(data)) {
+    return setError("Every field is required.");
+  }
+  submit(data);
+}
+</script>
+```
+
+And the one case for a per-call context — the flag is about each row, not about
+whoever is looking:
+
+```vue
+<!-- UserTable.vue -->
+<script setup lang="ts">
+import { useFlags } from "@flagward/vue";
+
+defineProps<{ users: User[] }>();
+const { getFlag } = useFlags();
+</script>
+
+<template>
+  <tr v-for="u in users" :key="u.id">
+    <td>{{ u.name }}</td>
+    <td>{{ getFlag("premium-badge", { plan: u.plan }) ? "★" : "" }}</td>
+  </tr>
+</template>
 ```
 
 ## Losing the network
