@@ -1,6 +1,6 @@
 {
   "name": "@flagward/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Framework-agnostic core for the Flagward SDKs: client, rule evaluation, and reporting",
   "type": "module",
   "main": "dist/index.js",

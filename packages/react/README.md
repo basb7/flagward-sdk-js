@@ -232,13 +232,79 @@ Wrap your app with `FlagwardProvider`:
 ```tsx
 <FlagwardProvider
   apiKey="your-api-key"
-  host="http://localhost:8000"  // optional, defaults to localhost:8000
+  host="https://flags.example.com"  // optional, defaults to https://app.flagward.com
   context={{ userId: "123" }}   // optional, used to evaluate targeting rules
   logLevel="warn"               // optional, see Error reporting below
 >
   {children}
 </FlagwardProvider>
 ```
+
+`host` defaults to the hosted service at `https://app.flagward.com`. A
+self-hosted install passes its own — and that is the case that has to be
+configured either way, since its operator already knows they are running
+something.
+
+## Next.js
+
+The App Router works with no wrapper of your own. The provider and the hooks
+declare `"use client"`, so this imports straight into a layout:
+
+```tsx
+// app/layout.tsx
+import { FlagwardProvider } from "@flagward/react";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html>
+      <body>
+        <FlagwardProvider apiKey={process.env.NEXT_PUBLIC_FLAGWARD_API_KEY!}>
+          {children}
+        </FlagwardProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+The package's entry point deliberately does *not* declare it, so a server
+component that only wants the evaluator is not dragged over the boundary.
+
+### In a server component
+
+Hooks do not run there, but the client does. Reach for
+[`@flagward/core`](https://www.npmjs.com/package/@flagward/core) — it is already
+installed as a dependency of this package, and it needs no browser:
+
+```tsx
+// app/page.tsx
+import { FlagwardClient } from "@flagward/core";
+
+export default async function Page() {
+  const client = new FlagwardClient({ apiKey: process.env.FLAGWARD_API_KEY! });
+  await client.init();
+
+  return client.evaluate("new-checkout", { plan: "pro" })
+    ? <NewCheckout />
+    : <LegacyCheckout />;
+}
+```
+
+Note the different key: a server component can read a private environment
+variable, so the key never reaches the browser. In the provider above it does,
+which is inherent to evaluating in the client and is why an environment's key
+grants access to that environment's flags and nothing else.
+
+### What is still missing
+
+`FlagwardProvider` starts its first read in an effect, and effects do not run
+on the server. So server-rendered HTML always carries `isLoading: true` and
+every flag reads as `undefined` until the browser takes over.
+
+There is no hydration mismatch — the server and the client's first render
+agree — but there is a flash of whatever your fallback renders, and a flagged
+component cannot be server-rendered in its real variant. Passing a snapshot
+from server to client is open work.
 
 ## Losing the network
 
@@ -300,7 +366,7 @@ import { FlagwardClient } from "@flagward/react";
 
 const client = new FlagwardClient({
   apiKey: "your-api-key",
-  host: "http://localhost:8000",
+  host: "https://flags.example.com",   // optional
 });
 
 await client.init();

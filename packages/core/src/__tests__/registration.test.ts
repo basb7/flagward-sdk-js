@@ -62,6 +62,37 @@ describe("registering with the server", () => {
   });
 });
 
+describe("where requests go", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  /**
+   * The hosted service, so an application that installs this and passes a key
+   * works without a second setting. A self-hosted install passes its own host,
+   * which is the case that has to be configured either way -- and the one whose
+   * operator already knows they are running something.
+   */
+  it("goes to the hosted service when nothing says otherwise", async () => {
+    const fetchMock = captureRegistration();
+
+    await new FlagwardClient({ apiKey: "key" }).register();
+
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toBe("https://app.flagward.com/api/v1/sdk/register/");
+  });
+
+  it("goes where the caller says instead", async () => {
+    const fetchMock = captureRegistration();
+
+    await new FlagwardClient({ apiKey: "key", host: "https://flags.example.com" }).register();
+
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toBe("https://flags.example.com/api/v1/sdk/register/");
+  });
+});
+
 describe("the reported version", () => {
   // Hardcoding the version next to the code that sends it is how it silently
   // drifts from what was actually published. This is the guard.

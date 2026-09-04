@@ -1,6 +1,6 @@
 {
   "name": "@flagward/vue",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Vue SDK for Flagward - Feature Flags as a Service",
   "type": "module",
   "main": "dist/index.js",
@@ -45,7 +45,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@flagward/core": "^0.1.0"
+    "@flagward/core": "^0.2.0"
   },
   "peerDependencies": {
     "vue": ">=3.5.0"

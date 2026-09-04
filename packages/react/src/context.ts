@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext } from "react";
 import { FlagwardClient } from "@flagward/core";
 import type { FlagDataMap, UserContext } from "@flagward/core";
