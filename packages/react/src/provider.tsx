@@ -1,3 +1,14 @@
+"use client";
+
+// Everything below reaches for a React API that only exists on the client, so
+// this module cannot run in a React Server Component. Declaring it here means a
+// Next.js application can import FlagwardProvider straight into its layout
+// instead of re-exporting it from a file of its own that says the same thing.
+//
+// index.ts deliberately does not carry this: it re-exports the core, which runs
+// anywhere, and marking the entry point would put a server component that only
+// wants the evaluator on the wrong side of the boundary.
+
 import { useEffect, useState } from "react";
 import { FlagwardClient } from "@flagward/core";
 import type { FlagDataMap, LogLevel, UserContext } from "@flagward/core";

@@ -1,6 +1,6 @@
 {
   "name": "@flagward/react",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "React SDK for Flagward - Feature Flags as a Service",
   "type": "module",
   "main": "dist/index.js",

@@ -1,3 +1,5 @@
+"use client";
+
 import { useContext, useEffect, useMemo } from "react";
 import { FlagwardContext } from "./context.js";
 import { createLogger, evaluateFlag } from "@flagward/core";
