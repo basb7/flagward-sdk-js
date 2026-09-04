@@ -47,6 +47,11 @@ const { value, isLoading } = useFlag("new-checkout");
 </template>
 ```
 
+`host` is optional and defaults to the hosted service at
+`https://app.flagward.com`. A self-hosted install passes its own — and that
+is the case that has to be configured either way, since its operator already
+knows they are running something.
+
 Nothing has to be wrapped. That is the point of installing on the app rather
 than providing from a component: a flag is asked for where the decision is
 made, not where somebody remembered to put a provider.

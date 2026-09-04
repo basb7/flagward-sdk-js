@@ -32,6 +32,11 @@ if (client.getFlag("new-checkout")) {
 }
 ```
 
+`host` is optional and defaults to the hosted service at
+`https://app.flagward.com`. A self-hosted install passes its own — and that
+is the case that has to be configured either way, since its operator already
+knows they are running something.
+
 `getFlag` never throws. A flag that is not in the environment reads as
 `undefined`, so your own fallback decides what happens, and the reason is
 reported to the console once.

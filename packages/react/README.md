@@ -232,13 +232,18 @@ Wrap your app with `FlagwardProvider`:
 ```tsx
 <FlagwardProvider
   apiKey="your-api-key"
-  host="http://localhost:8000"  // optional, defaults to localhost:8000
+  host="https://flags.example.com"  // optional, defaults to https://app.flagward.com
   context={{ userId: "123" }}   // optional, used to evaluate targeting rules
   logLevel="warn"               // optional, see Error reporting below
 >
   {children}
 </FlagwardProvider>
 ```
+
+`host` defaults to the hosted service at `https://app.flagward.com`. A
+self-hosted install passes its own — and that is the case that has to be
+configured either way, since its operator already knows they are running
+something.
 
 ## Next.js
 
@@ -361,7 +366,7 @@ import { FlagwardClient } from "@flagward/react";
 
 const client = new FlagwardClient({
   apiKey: "your-api-key",
-  host: "http://localhost:8000",
+  host: "https://flags.example.com",   // optional
 });
 
 await client.init();

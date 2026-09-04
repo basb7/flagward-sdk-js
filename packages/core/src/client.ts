@@ -14,6 +14,7 @@ export const DEFAULT_SDK_TYPE = "JAVASCRIPT";
 
 export interface FlagwardClientOptions {
   apiKey: string;
+  /** Where the API lives. Defaults to the hosted service. */
   host?: string;
   timeout?: number;
   /** How much the SDK reports to the console. Defaults to "warn". */
@@ -48,7 +49,11 @@ export class FlagwardClient {
 
   constructor(options: FlagwardClientOptions) {
     this.apiKey = options.apiKey;
-    this.host = options.host || "http://localhost:8000";
+    // The hosted service, so an application that installs this and passes a
+    // key works with no second setting. A self-hosted install passes its own
+    // host -- the case that has to be configured either way, and the one whose
+    // operator already knows they are running something.
+    this.host = options.host || "https://app.flagward.com";
     this.timeout = options.timeout || 10000;
     this.sdkVersion = options.sdkVersion || SDK_VERSION;
     this.sdkType = options.sdkType || DEFAULT_SDK_TYPE;
