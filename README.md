@@ -10,6 +10,7 @@ adapter per framework.
 | [`packages/core`](packages/core) | `@flagward/core` | The client, the rule evaluator, and console reporting. No framework, no DOM framework assumptions beyond the browser APIs it guards. |
 | [`packages/react`](packages/react) | `@flagward/react` | The React adapter: a provider, `useFlag` and `useFlags`. |
 | [`packages/vue`](packages/vue) | `@flagward/vue` | The Vue adapter: a plugin, `useFlag` and `useFlags`. |
+| [`packages/solid`](packages/solid) | `@flagward/solid` | The Solid adapter: a provider, `useFlag` and `useFlags`. |
 
 ## Why a core
 
