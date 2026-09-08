@@ -32,7 +32,7 @@ So the evaluator exists once, and every adapter depends on it.
 This is an npm workspace. From the repository root:
 
 ```bash
-npm install     # links packages/react against packages/core locally
+npm install     # links every adapter against packages/core locally
 npm run build   # builds every package
 npm run lint    # type-checks every package
 npm test        # runs every package's suite
@@ -59,7 +59,12 @@ the registry yet.
 npm publish -w @flagward/core
 npm publish -w @flagward/react
 npm publish -w @flagward/vue
+npm publish -w @flagward/solid
+npm publish -w @flagward/svelte
 ```
+
+The adapters have no ordering constraint among themselves — none of them
+depends on another.
 
 Each package lints, tests and builds itself through `prepublishOnly` before npm
 packs anything, so neither a failing suite nor a stale `dist` can reach the
@@ -89,10 +94,11 @@ generated from `package.json` before every build, so bumping the manifest is
 the whole change. A test in each package compares the two, so a file edited by
 hand fails the suite rather than shipping a version nobody published.
 
-Each adapter also names itself: the core registers as `JAVASCRIPT`, the React
-adapter as `REACT`. The server does not record adapter types yet, so those
-arrive ahead of the schema on purpose — when it does, the applications already
-in the field are distinguishable without anybody reinstalling anything.
+Each adapter also names itself: the core registers as `JAVASCRIPT`, and the
+adapters as `REACT`, `VUE`, `SOLID` and `SVELTE`. The server does not record
+adapter types yet, so those arrive ahead of the schema on purpose — when it
+does, the applications already in the field are distinguishable without
+anybody reinstalling anything.
 
 ## License
 
