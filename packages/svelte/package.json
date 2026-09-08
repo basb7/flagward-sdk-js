@@ -1,0 +1,63 @@
+{
+  "name": "@flagward/svelte",
+  "version": "0.1.0",
+  "description": "Svelte SDK for Flagward - Feature Flags as a Service",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "node ../../scripts/sync-version.mjs",
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "prepublishOnly": "npm run build --prefix ../core && npm run lint && npm run test:run && npm run build"
+  },
+  "keywords": [
+    "feature-flags",
+    "flags",
+    "svelte",
+    "sveltekit",
+    "sdk",
+    "flagward"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/basb7/flagward-sdk-js.git",
+    "directory": "packages/svelte"
+  },
+  "homepage": "https://github.com/basb7/flagward-sdk-js/tree/main/packages/svelte#readme",
+  "bugs": {
+    "url": "https://github.com/basb7/flagward-sdk-js/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@flagward/core": "^0.2.0"
+  },
+  "peerDependencies": {
+    "svelte": ">=4.0.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@testing-library/svelte": "^5.4.2",
+    "@types/node": "^22.0.0",
+    "jsdom": "^25.0.0",
+    "svelte": "^5.57.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
