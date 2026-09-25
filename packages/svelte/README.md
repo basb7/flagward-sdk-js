@@ -140,6 +140,24 @@ const all = useFlags();
 
 A flag inside these is looked up by key: `$all.flags["beta"]`.
 
+## `useVariant`
+
+Resolves the variant of a MULTIVARIATE flag:
+
+```ts
+const variant = useVariant("checkout-flow");
+// $variant.value      -- the variant's name, or undefined
+// $variant.isLoading
+// $variant.error
+```
+
+`$variant.value` is `undefined` while loading, for a key this environment
+does not have, and for a flag that is not MULTIVARIATE, is disabled, or is
+overridden (an override forces a boolean value server-side, so there is no
+variant). `useFlag` and `useFlags` keep returning `true` once a MULTIVARIATE
+flag is enabled — they answer "is it on", not "which variant". Reach for
+`useVariant` when the answer needs to be the variant itself.
+
 ## `createFlagward` and `flagStore` — the manual escape hatch
 
 `setFlagward` needs a component's `<script>` block, because that is the only
@@ -149,10 +167,11 @@ before any layout mounts — `createFlagward` builds the same state without
 that requirement, and you own calling `destroy()` yourself:
 
 ```ts
-import { createFlagward, flagStore } from "@flagward/svelte";
+import { createFlagward, flagStore, variantStore } from "@flagward/svelte";
 
 const flagward = createFlagward({ apiKey: "your-environment-api-key" });
 const flag = flagStore(flagward, "beta");
+const variant = variantStore(flagward, "checkout-flow");
 
 // later, once you are done with it
 flagward.destroy();
@@ -160,7 +179,8 @@ flagward.destroy();
 
 `flagward.getFlag(key, context?)` reads one flag right away, outside any
 store — useful from an event handler or anywhere else a subscription would be
-overkill.
+overkill. `flagward.getVariant(key, context?)` is the same, for a MULTIVARIATE
+flag's variant.
 
 ## Svelte 4 and 5
 
