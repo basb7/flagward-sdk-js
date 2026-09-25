@@ -3,7 +3,7 @@ export { DEFAULT_SDK_TYPE, FlagwardClient } from "./client.js";
 export type { FlagwardClientOptions } from "./client.js";
 
 // Evaluation, as a pure function of flag data and a user context
-export { evaluateFlag, toFlagMap } from "./evaluation.js";
+export { evaluateFlag, evaluateVariant, toFlagMap } from "./evaluation.js";
 
 // Deterministic hash bucketing, matching the backend's variant/rollout hash
 export { hashBucket, md5Hex } from "./hash.js";
@@ -24,4 +24,5 @@ export type {
   FlagMap,
   Rule,
   UserContext,
+  Variant,
 } from "./types.js";
