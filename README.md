@@ -13,6 +13,10 @@ adapter per framework.
 | [`packages/solid`](packages/solid) | `@flagward/solid` | The Solid adapter: a provider, `useFlag` and `useFlags`. |
 | [`packages/svelte`](packages/svelte) | `@flagward/svelte` | The Svelte adapter: `setFlagward`, `useFlag` and `useFlags`, built on `svelte/store`. |
 
+Every package also resolves MULTIVARIATE flags — `useVariant` in each adapter,
+or `client.getVariant` in the core — for A/B/n experiments and remote
+configuration. See the "Multivariate flags" section in each package's README.
+
 ## Why a core
 
 A feature flag SDK is mostly not framework code. Of this repository's source,

@@ -293,6 +293,80 @@ function UserTable(props: { users: User[] }) {
 }
 ```
 
+## Multivariate flags
+
+A MULTIVARIATE flag does not just turn a feature on — it hands back which
+variant a user is in. `useFlag` and `useFlags` keep answering "is it on"
+(`true` once the flag is enabled, even for a MULTIVARIATE flag); reach for
+[`useVariant`](#uservariantkey-context) above when the answer needs to be the
+variant name.
+
+### Put `user_id` in the provider
+
+Variant assignment is a deterministic bucket of `user_id` and the flag's
+key — the same user always lands in the same variant. **Without a `user_id`,
+every user resolves to the flag's control variant.** Set it alongside
+whatever else your rules target:
+
+```tsx
+<FlagwardProvider apiKey={apiKey} context={{ id: user.id, plan: user.plan }}>
+```
+
+### A/B/n experiment
+
+```tsx
+function Checkout() {
+  const { value: variant, isLoading } = useVariant("checkout-flow");
+
+  return (
+    <Switch fallback={<LegacyCheckout />}>
+      <Match when={isLoading()}><LegacyCheckout /></Match>
+      <Match when={variant() === "one-page"}><OnePageCheckout /></Match>
+      <Match when={variant() === "express"}><ExpressCheckout /></Match>
+    </Switch>
+  );
+}
+```
+
+### Variant as remote configuration
+
+A variant name is also a lookup key, not just a branch to render on. Call the
+accessor inside JSX to keep the fine-grained tracking:
+
+```tsx
+const COPY: Record<string, string> = {
+  control: "Buy now",
+  urgent: "Buy now — 3 left",
+};
+
+function BuyButton() {
+  const { value: variant } = useVariant("cta-copy");
+  return <button>{COPY[variant() ?? "control"]}</button>;
+}
+```
+
+### Segment targeting
+
+A rule can send part of a segment to a specific variant and let the rest fall
+through to the flag's overall split — only the first matching rule counts:
+
+```tsx
+const [plan, setPlan] = createSignal(user.plan);
+const { value: variant } = useVariant("pricing-page", () => ({ plan: plan() }));
+// e.g. a rule sends 20% of plan() === "enterprise" to "annual-discount";
+// the other 80% falls through to the flag's own split.
+```
+
+### Loading
+
+```tsx
+const { value, isLoading } = useVariant("checkout-flow");
+
+<Show when={!isLoading()} fallback={<Spinner />}>
+  {value() === "express" ? <ExpressCheckout /> : <LegacyCheckout />}
+</Show>
+```
+
 ## Losing the network
 
 The provider opens a server-sent events stream and keeps it in step on its own:

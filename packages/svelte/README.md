@@ -158,6 +158,81 @@ variant). `useFlag` and `useFlags` keep returning `true` once a MULTIVARIATE
 flag is enabled — they answer "is it on", not "which variant". Reach for
 `useVariant` when the answer needs to be the variant itself.
 
+## Multivariate flags
+
+### Put `user_id` in the context
+
+Variant assignment is a deterministic bucket of `user_id` and the flag's
+key — the same user always lands in the same variant. **Without a `user_id`,
+every user resolves to the flag's control variant.** Set it alongside
+whatever else your rules target:
+
+```ts
+setFlagward({ apiKey, context: { id: user.id, plan: user.plan } });
+```
+
+### A/B/n experiment
+
+```svelte
+<script lang="ts">
+  import { useVariant } from "@flagward/svelte";
+
+  const variant = useVariant("checkout-flow");
+</script>
+
+{#if $variant.isLoading}
+  <LegacyCheckout />
+{:else if $variant.value === "one-page"}
+  <OnePageCheckout />
+{:else if $variant.value === "express"}
+  <ExpressCheckout />
+{:else}
+  <LegacyCheckout />   <!-- control, or undefined -->
+{/if}
+```
+
+### Variant as remote configuration
+
+A variant name is also a lookup key, not just a branch to render on:
+
+```svelte
+<script lang="ts">
+  import { useVariant } from "@flagward/svelte";
+
+  const COPY: Record<string, string> = {
+    control: "Buy now",
+    urgent: "Buy now — 3 left",
+  };
+
+  const variant = useVariant("cta-copy");
+</script>
+
+<button>{COPY[$variant.value ?? "control"]}</button>
+```
+
+### Segment targeting
+
+The per-call context can be a store, same as `useFlag` — a rule can send part
+of a segment to a specific variant and let the rest fall through to the
+flag's overall split:
+
+```ts
+import { writable } from "svelte/store";
+import { useVariant } from "@flagward/svelte";
+
+const plan = writable({ plan: user.plan });
+const variant = useVariant("pricing-page", plan);
+// e.g. a rule sends 20% of plan === "enterprise" to "annual-discount";
+// the other 80% falls through to the flag's own split.
+```
+
+### Loading
+
+```ts
+const variant = useVariant("checkout-flow");
+// $variant.isLoading first, then $variant.value
+```
+
 ## `createFlagward` and `flagStore` — the manual escape hatch
 
 `setFlagward` needs a component's `<script>` block, because that is the only
