@@ -262,7 +262,7 @@ most common surprise: a `useVariant` call under a provider with no `id` in
 `context` never sees anything but control.
 
 ```tsx
-<FlagwardProvider apiKey="your-api-key" context={{ id: user.id }}>
+<FlagwardProvider apiKey="your-api-key" context={{ user_id: user.id }}>
 ```
 
 ### A/B/n experiment
@@ -297,7 +297,7 @@ const COPY: Record<string, string> = {
 
 function BuyButton() {
   const { value: variant } = useVariant("cta-copy");
-  return <button>{COPY[variant ?? "control"]}</button>;
+  return <button>{COPY[variant ?? ""] ?? "Buy now"}</button>;
 }
 ```
 

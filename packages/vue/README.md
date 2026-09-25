@@ -292,7 +292,7 @@ every user resolves to the flag's control variant.** Set it alongside
 whatever else your rules target:
 
 ```ts
-app.use(flagward({ apiKey, context: { id: user.id, plan: user.plan } }));
+app.use(flagward({ apiKey, context: { user_id: user.id, plan: user.plan } }));
 ```
 
 ### A/B/n experiment
@@ -327,7 +327,7 @@ const COPY: Record<string, string> = {
 };
 
 const { value: variant } = useVariant("cta-copy");
-const label = computed(() => COPY[variant.value ?? "control"]);
+const label = computed(() => COPY[variant.value ?? ""] ?? "Buy now");
 ```
 
 ### Segment targeting

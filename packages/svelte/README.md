@@ -168,7 +168,7 @@ every user resolves to the flag's control variant.** Set it alongside
 whatever else your rules target:
 
 ```ts
-setFlagward({ apiKey, context: { id: user.id, plan: user.plan } });
+setFlagward({ apiKey, context: { user_id: user.id, plan: user.plan } });
 ```
 
 ### A/B/n experiment
@@ -207,7 +207,7 @@ A variant name is also a lookup key, not just a branch to render on:
   const variant = useVariant("cta-copy");
 </script>
 
-<button>{COPY[$variant.value ?? "control"]}</button>
+<button>{COPY[$variant.value ?? ""] ?? "Buy now"}</button>
 ```
 
 ### Segment targeting

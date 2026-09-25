@@ -309,7 +309,7 @@ every user resolves to the flag's control variant.** Set it alongside
 whatever else your rules target:
 
 ```tsx
-<FlagwardProvider apiKey={apiKey} context={{ id: user.id, plan: user.plan }}>
+<FlagwardProvider apiKey={apiKey} context={{ user_id: user.id, plan: user.plan }}>
 ```
 
 ### A/B/n experiment
@@ -341,7 +341,7 @@ const COPY: Record<string, string> = {
 
 function BuyButton() {
   const { value: variant } = useVariant("cta-copy");
-  return <button>{COPY[variant() ?? "control"]}</button>;
+  return <button>{COPY[variant() ?? ""] ?? "Buy now"}</button>;
 }
 ```
 
