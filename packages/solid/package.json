@@ -1,6 +1,6 @@
 {
   "name": "@flagward/solid",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Solid SDK for Flagward - Feature Flags as a Service",
   "type": "module",
   "main": "dist/index.js",
@@ -46,7 +46,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@flagward/core": "^0.2.0"
+    "@flagward/core": "^0.3.0"
   },
   "peerDependencies": {
     "solid-js": ">=1.8.0"
