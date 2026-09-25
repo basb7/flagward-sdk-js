@@ -9,26 +9,52 @@
  */
 import type { Condition, FlagData, FlagMap, Rule, UserContext } from "./types.js";
 
+/**
+ * Unwrap a stored condition value.
+ *
+ * The server stores condition values wrapped, e.g. `{"type": "string", "value": "US"}`,
+ * and reads `condition.value.get("value")` at evaluation time
+ * (`core_flags/services.py`). A bare scalar or array is left untouched -- an
+ * array is never treated as a wrapper, so IN_LIST's `value: ["AR", "US"]`
+ * still works.
+ */
+function unwrapConditionValue(value: unknown): unknown {
+  if (value && typeof value === "object" && !Array.isArray(value) && "value" in value) {
+    return (value as { value: unknown }).value;
+  }
+
+  return value;
+}
+
 function evaluateCondition(condition: Condition, context: UserContext): boolean {
+  // context[attr] is undefined for a missing key and null when the caller
+  // passed one explicitly; the server's context.get(attribute) returns None
+  // for both, so both read as "missing" here.
   const attributeValue = context[condition.attribute];
 
-  if (attributeValue === undefined) {
+  if (attributeValue === undefined || attributeValue === null) {
+    return false;
+  }
+
+  const expectedValue = unwrapConditionValue(condition.value);
+
+  if (expectedValue === undefined || expectedValue === null) {
     return false;
   }
 
   switch (condition.operator) {
     case "EQUALS":
-      return attributeValue === condition.value;
+      return attributeValue === expectedValue;
     case "NOT_EQUALS":
-      return attributeValue !== condition.value;
+      return attributeValue !== expectedValue;
     case "GREATER_THAN":
-      return Number(attributeValue) > Number(condition.value);
+      return Number(attributeValue) > Number(expectedValue);
     case "LESS_THAN":
-      return Number(attributeValue) < Number(condition.value);
+      return Number(attributeValue) < Number(expectedValue);
     case "IN_LIST":
-      return Array.isArray(condition.value) && condition.value.includes(attributeValue);
+      return Array.isArray(expectedValue) && expectedValue.includes(attributeValue);
     case "CONTAINS":
-      return String(attributeValue).includes(String(condition.value));
+      return String(attributeValue).includes(String(expectedValue));
     default:
       return false;
   }
