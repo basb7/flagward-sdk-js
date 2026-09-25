@@ -113,6 +113,26 @@ getFlag("show-banner", { plan: "pro" });   // one flag, plus this context
 `getFlag` is a plain function, so it can be called anywhere — including places
 a hook cannot go.
 
+### `useVariant(key, context?)`
+
+Resolves the variant of a MULTIVARIATE flag.
+
+```tsx
+const { value, isLoading, error } = useVariant("checkout-flow");
+```
+
+Returns:
+- `value`: `string | undefined` — the variant's name, `undefined` while
+  loading, for a key this environment does not have, and for a flag that is
+  not MULTIVARIATE, is disabled, or is overridden (an override forces a
+  boolean value server-side, so there is no variant)
+- `isLoading`: `boolean`
+- `error`: `Error | null`
+
+The boolean hooks (`useFlag`, `useFlags`) keep returning `true` once a
+MULTIVARIATE flag is enabled — they answer "is it on", not "which variant".
+Use `useVariant` when the answer needs to be the variant itself.
+
 ### Where context comes from
 
 Targeting rules are evaluated against a context, and there are two places it
