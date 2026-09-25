@@ -154,6 +154,24 @@ getFlag("beta");                      // one flag, app context
 getFlag("beta", { plan: "pro" });     // one flag, this context
 ```
 
+### `useVariant(key, context?)`
+
+Resolves the variant of a MULTIVARIATE flag.
+
+```ts
+const { value, isLoading, error } = useVariant("checkout-flow");
+```
+
+| | |
+| --- | --- |
+| `value` | `ComputedRef<string \| undefined>` — the variant's name, `undefined` while loading, for a key this environment does not have, and for a flag that is not MULTIVARIATE, is disabled, or is overridden (an override forces a boolean value server-side, so there is no variant) |
+| `isLoading` | `ComputedRef<boolean>` — true until the first snapshot arrives |
+| `error` | `ComputedRef<Error \| null>` — the last startup failure, cleared when flags arrive |
+
+`useFlag` and `useFlags` keep returning `true` once a MULTIVARIATE flag is
+enabled — they answer "is it on", not "which variant". Reach for `useVariant`
+when the answer needs to be the variant itself.
+
 ### Where context comes from
 
 Targeting rules are evaluated against a context, and there are two places it
