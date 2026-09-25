@@ -157,6 +157,24 @@ getFlag("beta");                      // one flag, app context
 getFlag("beta", { plan: "pro" });     // one flag, this context
 ```
 
+### `useVariant(key, context?)`
+
+Resolves the variant of a MULTIVARIATE flag.
+
+```tsx
+const { value, isLoading, error } = useVariant("checkout-flow");
+```
+
+| | |
+| --- | --- |
+| `value` | `Accessor<string \| undefined>` — the variant's name, `undefined` while loading, for a key this environment does not have, and for a flag that is not MULTIVARIATE, is disabled, or is overridden (an override forces a boolean value server-side, so there is no variant) |
+| `isLoading` | `Accessor<boolean>` — true until the first snapshot arrives |
+| `error` | `Accessor<Error \| null>` — the last startup failure, cleared when flags arrive |
+
+`useFlag` and `useFlags` keep returning `true` once a MULTIVARIATE flag is
+enabled — they answer "is it on", not "which variant". Reach for `useVariant`
+when the answer needs to be the variant itself.
+
 ### Where context comes from
 
 Targeting rules are evaluated against a context, and there are two places it
@@ -273,6 +291,80 @@ function UserTable(props: { users: User[] }) {
     </For>
   );
 }
+```
+
+## Multivariate flags
+
+A MULTIVARIATE flag does not just turn a feature on — it hands back which
+variant a user is in. `useFlag` and `useFlags` keep answering "is it on"
+(`true` once the flag is enabled, even for a MULTIVARIATE flag); reach for
+[`useVariant`](#uservariantkey-context) above when the answer needs to be the
+variant name.
+
+### Put `user_id` in the provider
+
+Variant assignment is a deterministic bucket of `user_id` and the flag's
+key — the same user always lands in the same variant. **Without a `user_id`,
+every user resolves to the flag's control variant.** Set it alongside
+whatever else your rules target:
+
+```tsx
+<FlagwardProvider apiKey={apiKey} context={{ user_id: user.id, plan: user.plan }}>
+```
+
+### A/B/n experiment
+
+```tsx
+function Checkout() {
+  const { value: variant, isLoading } = useVariant("checkout-flow");
+
+  return (
+    <Switch fallback={<LegacyCheckout />}>
+      <Match when={isLoading()}><LegacyCheckout /></Match>
+      <Match when={variant() === "one-page"}><OnePageCheckout /></Match>
+      <Match when={variant() === "express"}><ExpressCheckout /></Match>
+    </Switch>
+  );
+}
+```
+
+### Variant as remote configuration
+
+A variant name is also a lookup key, not just a branch to render on. Call the
+accessor inside JSX to keep the fine-grained tracking:
+
+```tsx
+const COPY: Record<string, string> = {
+  control: "Buy now",
+  urgent: "Buy now — 3 left",
+};
+
+function BuyButton() {
+  const { value: variant } = useVariant("cta-copy");
+  return <button>{COPY[variant() ?? ""] ?? "Buy now"}</button>;
+}
+```
+
+### Segment targeting
+
+A rule can send part of a segment to a specific variant and let the rest fall
+through to the flag's overall split — only the first matching rule counts:
+
+```tsx
+const [plan, setPlan] = createSignal(user.plan);
+const { value: variant } = useVariant("pricing-page", () => ({ plan: plan() }));
+// e.g. a rule sends 20% of plan() === "enterprise" to "annual-discount";
+// the other 80% falls through to the flag's own split.
+```
+
+### Loading
+
+```tsx
+const { value, isLoading } = useVariant("checkout-flow");
+
+<Show when={!isLoading()} fallback={<Spinner />}>
+  {value() === "express" ? <ExpressCheckout /> : <LegacyCheckout />}
+</Show>
 ```
 
 ## Losing the network

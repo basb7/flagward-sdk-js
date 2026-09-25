@@ -140,6 +140,99 @@ const all = useFlags();
 
 A flag inside these is looked up by key: `$all.flags["beta"]`.
 
+## `useVariant`
+
+Resolves the variant of a MULTIVARIATE flag:
+
+```ts
+const variant = useVariant("checkout-flow");
+// $variant.value      -- the variant's name, or undefined
+// $variant.isLoading
+// $variant.error
+```
+
+`$variant.value` is `undefined` while loading, for a key this environment
+does not have, and for a flag that is not MULTIVARIATE, is disabled, or is
+overridden (an override forces a boolean value server-side, so there is no
+variant). `useFlag` and `useFlags` keep returning `true` once a MULTIVARIATE
+flag is enabled — they answer "is it on", not "which variant". Reach for
+`useVariant` when the answer needs to be the variant itself.
+
+## Multivariate flags
+
+### Put `user_id` in the context
+
+Variant assignment is a deterministic bucket of `user_id` and the flag's
+key — the same user always lands in the same variant. **Without a `user_id`,
+every user resolves to the flag's control variant.** Set it alongside
+whatever else your rules target:
+
+```ts
+setFlagward({ apiKey, context: { user_id: user.id, plan: user.plan } });
+```
+
+### A/B/n experiment
+
+```svelte
+<script lang="ts">
+  import { useVariant } from "@flagward/svelte";
+
+  const variant = useVariant("checkout-flow");
+</script>
+
+{#if $variant.isLoading}
+  <LegacyCheckout />
+{:else if $variant.value === "one-page"}
+  <OnePageCheckout />
+{:else if $variant.value === "express"}
+  <ExpressCheckout />
+{:else}
+  <LegacyCheckout />   <!-- control, or undefined -->
+{/if}
+```
+
+### Variant as remote configuration
+
+A variant name is also a lookup key, not just a branch to render on:
+
+```svelte
+<script lang="ts">
+  import { useVariant } from "@flagward/svelte";
+
+  const COPY: Record<string, string> = {
+    control: "Buy now",
+    urgent: "Buy now — 3 left",
+  };
+
+  const variant = useVariant("cta-copy");
+</script>
+
+<button>{COPY[$variant.value ?? ""] ?? "Buy now"}</button>
+```
+
+### Segment targeting
+
+The per-call context can be a store, same as `useFlag` — a rule can send part
+of a segment to a specific variant and let the rest fall through to the
+flag's overall split:
+
+```ts
+import { writable } from "svelte/store";
+import { useVariant } from "@flagward/svelte";
+
+const plan = writable({ plan: user.plan });
+const variant = useVariant("pricing-page", plan);
+// e.g. a rule sends 20% of plan === "enterprise" to "annual-discount";
+// the other 80% falls through to the flag's own split.
+```
+
+### Loading
+
+```ts
+const variant = useVariant("checkout-flow");
+// $variant.isLoading first, then $variant.value
+```
+
 ## `createFlagward` and `flagStore` — the manual escape hatch
 
 `setFlagward` needs a component's `<script>` block, because that is the only
@@ -149,10 +242,11 @@ before any layout mounts — `createFlagward` builds the same state without
 that requirement, and you own calling `destroy()` yourself:
 
 ```ts
-import { createFlagward, flagStore } from "@flagward/svelte";
+import { createFlagward, flagStore, variantStore } from "@flagward/svelte";
 
 const flagward = createFlagward({ apiKey: "your-environment-api-key" });
 const flag = flagStore(flagward, "beta");
+const variant = variantStore(flagward, "checkout-flow");
 
 // later, once you are done with it
 flagward.destroy();
@@ -160,7 +254,8 @@ flagward.destroy();
 
 `flagward.getFlag(key, context?)` reads one flag right away, outside any
 store — useful from an event handler or anywhere else a subscription would be
-overkill.
+overkill. `flagward.getVariant(key, context?)` is the same, for a MULTIVARIATE
+flag's variant.
 
 ## Svelte 4 and 5
 

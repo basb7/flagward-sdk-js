@@ -113,6 +113,26 @@ getFlag("show-banner", { plan: "pro" });   // one flag, plus this context
 `getFlag` is a plain function, so it can be called anywhere — including places
 a hook cannot go.
 
+### `useVariant(key, context?)`
+
+Resolves the variant of a MULTIVARIATE flag.
+
+```tsx
+const { value, isLoading, error } = useVariant("checkout-flow");
+```
+
+Returns:
+- `value`: `string | undefined` — the variant's name, `undefined` while
+  loading, for a key this environment does not have, and for a flag that is
+  not MULTIVARIATE, is disabled, or is overridden (an override forces a
+  boolean value server-side, so there is no variant)
+- `isLoading`: `boolean`
+- `error`: `Error | null`
+
+The boolean hooks (`useFlag`, `useFlags`) keep returning `true` once a
+MULTIVARIATE flag is enabled — they answer "is it on", not "which variant".
+Use `useVariant` when the answer needs to be the variant itself.
+
 ### Where context comes from
 
 Targeting rules are evaluated against a context, and there are two places it
@@ -223,6 +243,86 @@ function UserTable({ users }: { users: User[] }) {
     </tbody>
   );
 }
+```
+
+## Multivariate flags
+
+A MULTIVARIATE flag does not just turn a feature on — it hands back which
+variant a user is in. `useFlag` and `useFlags` keep answering "is it on"
+(`true` once the flag is enabled, even for a MULTIVARIATE flag); reach for
+[`useVariant`](#uservariantkey-context) above when the answer needs to be the
+variant name.
+
+### Put `user_id` in the provider
+
+Variant assignment is a deterministic bucket of `user_id` and the flag's
+key — the same user always lands in the same variant. **Without a `user_id`
+in context, every user resolves to the flag's control variant.** This is the
+most common surprise: a `useVariant` call under a provider with no `id` in
+`context` never sees anything but control.
+
+```tsx
+<FlagwardProvider apiKey="your-api-key" context={{ user_id: user.id }}>
+```
+
+### A/B/n experiment
+
+```tsx
+function Checkout() {
+  const { value: variant, isLoading } = useVariant("checkout-flow");
+
+  if (isLoading) return <LegacyCheckout />;
+
+  switch (variant) {
+    case "one-page":
+      return <OnePageCheckout />;
+    case "express":
+      return <ExpressCheckout />;
+    default:
+      return <LegacyCheckout />;   // control, or undefined
+  }
+}
+```
+
+### Variant as remote configuration
+
+A variant name is also a lookup key, not just a branch to render on:
+
+```tsx
+const COPY: Record<string, string> = {
+  control: "Buy now",
+  urgent: "Buy now — 3 left",
+  social: "Buy now — 200 sold today",
+};
+
+function BuyButton() {
+  const { value: variant } = useVariant("cta-copy");
+  return <button>{COPY[variant ?? ""] ?? "Buy now"}</button>;
+}
+```
+
+### Segment targeting
+
+A rule can send part of a segment to a specific variant and let the rest fall
+through to the flag's overall split — only the first matching rule counts:
+
+```tsx
+const { value: variant } = useVariant("pricing-page", { plan: "enterprise" });
+// e.g. a rule sends 20% of plan === "enterprise" to "annual-discount";
+// the other 80% (and everyone else) falls through to the flag's own split.
+```
+
+### Loading
+
+`value` is `undefined` while `isLoading` is `true`, so branch on loading first
+when the fallback for "loading" should differ from the fallback for
+"control":
+
+```tsx
+const { value, isLoading } = useVariant("checkout-flow");
+
+if (isLoading) return <Spinner />;
+return value === "express" ? <ExpressCheckout /> : <LegacyCheckout />;
 ```
 
 ## Provider

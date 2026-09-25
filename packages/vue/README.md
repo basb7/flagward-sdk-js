@@ -154,6 +154,24 @@ getFlag("beta");                      // one flag, app context
 getFlag("beta", { plan: "pro" });     // one flag, this context
 ```
 
+### `useVariant(key, context?)`
+
+Resolves the variant of a MULTIVARIATE flag.
+
+```ts
+const { value, isLoading, error } = useVariant("checkout-flow");
+```
+
+| | |
+| --- | --- |
+| `value` | `ComputedRef<string \| undefined>` — the variant's name, `undefined` while loading, for a key this environment does not have, and for a flag that is not MULTIVARIATE, is disabled, or is overridden (an override forces a boolean value server-side, so there is no variant) |
+| `isLoading` | `ComputedRef<boolean>` — true until the first snapshot arrives |
+| `error` | `ComputedRef<Error \| null>` — the last startup failure, cleared when flags arrive |
+
+`useFlag` and `useFlags` keep returning `true` once a MULTIVARIATE flag is
+enabled — they answer "is it on", not "which variant". Reach for `useVariant`
+when the answer needs to be the variant itself.
+
 ### Where context comes from
 
 Targeting rules are evaluated against a context, and there are two places it
@@ -256,6 +274,82 @@ const { getFlag } = useFlags();
     <td>{{ getFlag("premium-badge", { plan: u.plan }) ? "★" : "" }}</td>
   </tr>
 </template>
+```
+
+## Multivariate flags
+
+A MULTIVARIATE flag does not just turn a feature on — it hands back which
+variant a user is in. `useFlag` and `useFlags` keep answering "is it on"
+(`true` once the flag is enabled, even for a MULTIVARIATE flag); reach for
+[`useVariant`](#uservariantkey-context) above when the answer needs to be the
+variant name.
+
+### Put `user_id` in the context
+
+Variant assignment is a deterministic bucket of `user_id` and the flag's
+key — the same user always lands in the same variant. **Without a `user_id`,
+every user resolves to the flag's control variant.** Set it alongside
+whatever else your rules target:
+
+```ts
+app.use(flagward({ apiKey, context: { user_id: user.id, plan: user.plan } }));
+```
+
+### A/B/n experiment
+
+```vue
+<script setup lang="ts">
+import { useVariant } from "@flagward/vue";
+
+const { value: variant, isLoading } = useVariant("checkout-flow");
+</script>
+
+<template>
+  <LegacyCheckout v-if="isLoading" />
+  <OnePageCheckout v-else-if="variant === 'one-page'" />
+  <ExpressCheckout v-else-if="variant === 'express'" />
+  <LegacyCheckout v-else />   <!-- control, or undefined -->
+</template>
+```
+
+### Variant as remote configuration
+
+A variant name is also a lookup key, not just a branch to render on. In
+`<script>`, read through `.value`; a `computed` keeps the lookup reactive:
+
+```ts
+import { computed } from "vue";
+import { useVariant } from "@flagward/vue";
+
+const COPY: Record<string, string> = {
+  control: "Buy now",
+  urgent: "Buy now — 3 left",
+};
+
+const { value: variant } = useVariant("cta-copy");
+const label = computed(() => COPY[variant.value ?? ""] ?? "Buy now");
+```
+
+### Segment targeting
+
+Per-call context is reactive the same way it is for `useFlag` — a ref or a
+getter — and a rule can send part of a segment to a specific variant while the
+rest falls through to the flag's overall split:
+
+```ts
+const plan = ref(user.plan);
+const { value: variant } = useVariant("pricing-page", () => ({ plan: plan.value }));
+// e.g. a rule sends 20% of plan.value === "enterprise" to "annual-discount";
+// the other 80% falls through to the flag's own split.
+```
+
+### Loading
+
+```ts
+const { value, isLoading } = useVariant("checkout-flow");
+
+if (isLoading.value) { /* show a spinner */ }
+else if (value.value === "express") { /* ... */ }
 ```
 
 ## Losing the network

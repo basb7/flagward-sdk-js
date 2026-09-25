@@ -1,6 +1,7 @@
 import { get, writable, type Readable } from "svelte/store";
 import {
   evaluateFlag,
+  evaluateVariant,
   FlagwardClient,
   type FlagDataMap,
   type LogLevel,
@@ -34,6 +35,8 @@ export interface FlagwardState {
   context: MaybeStore<UserContext>;
   /** Resolve one flag right now, outside any reactive graph. */
   getFlag: (key: string, flagContext?: UserContext) => boolean | undefined;
+  /** Resolve one MULTIVARIATE flag's variant right now, outside any reactive graph. */
+  getVariant: (key: string, flagContext?: UserContext) => string | undefined;
   destroy: () => void;
 }
 
@@ -132,6 +135,24 @@ export function createFlagward(options: FlagwardOptions): FlagwardState {
       });
 
       if (resolved === undefined) {
+        client.logger.warn(
+          `unknown-flag:${key}`,
+          `Flag "${key}" is not in this environment, so it reads as undefined. ` +
+            "Check the key, and that the flag exists in the environment this " +
+            "API key belongs to.",
+        );
+      }
+
+      return resolved;
+    },
+    getVariant(key: string, flagContext?: UserContext): string | undefined {
+      const flagData = get(flagsData)[key];
+      const resolved = evaluateVariant(flagData, {
+        ...currentContext(appContext),
+        ...flagContext,
+      });
+
+      if (resolved === undefined && flagData === undefined) {
         client.logger.warn(
           `unknown-flag:${key}`,
           `Flag "${key}" is not in this environment, so it reads as undefined. ` +

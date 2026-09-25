@@ -60,6 +60,45 @@ holds the data:
 import { evaluateFlag, toFlagMap } from "@flagward/core";
 ```
 
+## Multivariate flags
+
+A MULTIVARIATE flag's variant is resolved the same way, against a user
+context:
+
+```js
+const variant = client.getVariant("checkout-flow", { user_id: user.id, plan: user.plan });
+```
+
+Variant assignment is a deterministic bucket of `user_id` and the flag's
+key — the same user always lands in the same variant. **Without a `user_id`,
+every user resolves to the flag's control variant.** `getVariant` never
+throws: a flag that is not in the environment, is not MULTIVARIATE, is
+disabled, or is overridden (an override forces a boolean value server-side, so
+there is no variant) all read as `undefined`, and your own fallback decides
+what happens.
+
+A rule can send part of a segment to a specific variant and let the rest fall
+through to the flag's overall split — only the first matching rule counts:
+
+```js
+client.getVariant("pricing-page", { user_id: user.id, plan: "enterprise" });
+// e.g. a rule sends 20% of plan === "enterprise" to "annual-discount";
+// the other 80% (and everyone else) falls through to the flag's own split.
+```
+
+Also available as a pure function, for a caller that already holds the flag
+data:
+
+```js
+import { evaluateVariant } from "@flagward/core";
+
+evaluateVariant(flagData, { user_id: user.id });
+```
+
+Boolean evaluation (`getFlag`, `evaluate`, `evaluateFlag`) keeps answering "is
+it on" for a MULTIVARIATE flag — `true` once enabled, regardless of which
+variant a user would land in.
+
 ## Live updates
 
 ```js
