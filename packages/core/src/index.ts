@@ -5,6 +5,9 @@ export type { FlagwardClientOptions } from "./client.js";
 // Evaluation, as a pure function of flag data and a user context
 export { evaluateFlag, toFlagMap } from "./evaluation.js";
 
+// Deterministic hash bucketing, matching the backend's variant/rollout hash
+export { hashBucket, md5Hex } from "./hash.js";
+
 // Console reporting
 export { createLogger, resetLoggerState } from "./logger.js";
 
