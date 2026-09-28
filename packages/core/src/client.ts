@@ -1,4 +1,4 @@
-import { evaluateFlag } from "./evaluation.js";
+import { evaluateFlag, evaluateVariant } from "./evaluation.js";
 import { createLogger, type LogLevel, type Logger } from "./logger.js";
 import type { Flag, FlagDataMap, FlagMap, UserContext } from "./types.js";
 import { SDK_VERSION } from "./version.js";
@@ -159,6 +159,9 @@ export class FlagwardClient {
       newFlagsData[flag.key] = {
         key: flag.key,
         is_enabled: flag.is_enabled,
+        flag_type: flag.flag_type,
+        variants: flag.variants || [],
+        overridden: flag.overridden,
         rules: flag.rules || [],
       };
       newFlags[flag.key] = flag.is_enabled;
@@ -205,6 +208,28 @@ export class FlagwardClient {
       );
       return undefined;
     }
+  }
+
+  /**
+   * The variant name for a MULTIVARIATE flag, or undefined -- the flag is
+   * unknown, disabled, overridden, not MULTIVARIATE, or has no variants. Never
+   * throws: an unknown key reads the same as any other reason there is no
+   * variant, so callers apply one fallback regardless of why.
+   */
+  getVariant(key: string, context?: UserContext): string | undefined {
+    const flagData = this.flagsData[key];
+
+    if (!flagData) {
+      this.logger.warn(
+        `unknown-flag:${key}`,
+        `Flag "${key}" is not in this environment, so it reads as undefined. ` +
+          "Check the key, and that the flag exists in the environment this " +
+          "API key belongs to.",
+      );
+      return undefined;
+    }
+
+    return evaluateVariant(flagData, context || {});
   }
 
   get cachedFlags(): FlagMap {

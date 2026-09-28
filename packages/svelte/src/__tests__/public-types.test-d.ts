@@ -12,6 +12,7 @@ import { writable, type Readable } from "svelte/store";
 import {
   createFlagward,
   evaluateFlag,
+  evaluateVariant,
   flagStore,
   flagsStore,
   getFlagward,
@@ -19,6 +20,8 @@ import {
   toFlagMap,
   useFlag,
   useFlags,
+  useVariant,
+  variantStore,
   type FlagData,
   type FlagDataMap,
   type FlagMap,
@@ -32,7 +35,10 @@ import {
   type MaybeStore,
   type UseFlagResult,
   type UseFlagsResult,
+  type UseVariantResult,
   type UserContext,
+  type Variant,
+  type VariantState,
 } from "../index";
 
 // createFlagward and setFlagward share one options shape, so a wrapper can
@@ -112,3 +118,24 @@ void clientOptions;
 
 declare const logger: Logger;
 void logger;
+
+// A variant resolves to a string or nothing -- the same undefined-means-not-
+// applicable shape as FlagState, just for the variant name.
+declare const variantResult: UseVariantResult;
+const asReadableVariant: Readable<VariantState> = variantResult;
+void asReadableVariant;
+
+declare const variantState: VariantState;
+const variantValue: string | undefined = variantState.value;
+void variantValue;
+
+void useVariant("checkout-flow", { plan: "pro" });
+void useVariant("checkout-flow", writable({ plan: "pro" }));
+void variantStore(state, "checkout-flow");
+void variantStore(state, "checkout-flow", { plan: "pro" });
+
+const variant: Variant = { name: "control", percentage_allocation: 50, is_control: true };
+void variant;
+
+const variantResolved: string | undefined = evaluateVariant(data, context);
+void variantResolved;
