@@ -8,7 +8,15 @@
  * disagree without anything reporting it.
  */
 import { hashBucket } from "./hash.js";
-import type { Condition, FlagData, FlagMap, Rule, UserContext, Variant } from "./types.js";
+import type {
+  Condition,
+  EvaluationDetail,
+  FlagData,
+  FlagMap,
+  Rule,
+  UserContext,
+  Variant,
+} from "./types.js";
 
 /**
  * Unwrap a stored condition value.
@@ -124,31 +132,46 @@ export function evaluateFlag(
   flagData: FlagData | undefined,
   context: UserContext = {},
 ): boolean | undefined {
+  return evaluateFlagDetail(flagData, context)?.value;
+}
+
+/**
+ * `evaluateFlag`, plus the reason it produced its value. Undefined when the
+ * flag is not in the given data.
+ */
+export function evaluateFlagDetail(
+  flagData: FlagData | undefined,
+  context: UserContext = {},
+): EvaluationDetail<boolean> | undefined {
   if (!flagData) {
     return undefined;
   }
 
+  // An override only changes the reason, never the value. The server strips
+  // an overridden flag's rules and forces is_enabled, so the paths below
+  // already land on the forced value; one forced off reads STATIC rather
+  // than DISABLED because nobody turned the flag itself off.
   if (!flagData.is_enabled) {
-    return false;
+    return { value: false, reason: flagData.overridden ? "STATIC" : "DISABLED" };
   }
 
   if (flagData.flag_type === "MULTIVARIATE") {
-    return true;
+    return { value: true, reason: "STATIC" };
   }
 
   if (!flagData.rules || flagData.rules.length === 0) {
-    return true;
+    return { value: true, reason: "STATIC" };
   }
 
   const sortedRules = [...flagData.rules].sort((a, b) => a.priority - b.priority);
 
   for (const rule of sortedRules) {
     if (evaluateRule(rule, context, flagData.key)) {
-      return true;
+      return { value: true, reason: "TARGETING_MATCH" };
     }
   }
 
-  return false;
+  return { value: false, reason: "DEFAULT" };
 }
 
 /**
@@ -165,9 +188,9 @@ function assignByPercentage(
   variants: Variant[],
   userId: unknown,
   flagKey: string,
-): string | undefined {
+): EvaluationDetail<string | undefined> {
   if (userId === undefined || userId === null) {
-    return variants.find((v) => v.is_control)?.name;
+    return controlVariant(variants);
   }
 
   const bucket = hashBucket(userId, flagKey);
@@ -176,11 +199,16 @@ function assignByPercentage(
   for (const variant of variants) {
     cumulative += variant.percentage_allocation;
     if (bucket < cumulative) {
-      return variant.name;
+      return { value: variant.name, reason: "SPLIT" };
     }
   }
 
-  return variants[variants.length - 1]?.name;
+  return { value: variants[variants.length - 1]?.name, reason: "SPLIT" };
+}
+
+/** The fallback when there is no user id to bucket by. */
+function controlVariant(variants: Variant[]): EvaluationDetail<string | undefined> {
+  return { value: variants.find((v) => v.is_control)?.name, reason: "DEFAULT" };
 }
 
 /**
@@ -198,17 +226,33 @@ export function evaluateVariant(
   flagData: FlagData | undefined,
   context: UserContext = {},
 ): string | undefined {
-  if (!flagData || !flagData.is_enabled || flagData.overridden) {
+  return evaluateVariantDetail(flagData, context)?.value;
+}
+
+/**
+ * `evaluateVariant`, plus the reason it produced its value. Undefined only
+ * when the flag is not in the given data; every other "no variant" case
+ * carries `value: undefined` and says why.
+ */
+export function evaluateVariantDetail(
+  flagData: FlagData | undefined,
+  context: UserContext = {},
+): EvaluationDetail<string | undefined> | undefined {
+  if (!flagData) {
     return undefined;
   }
 
-  if (flagData.flag_type !== "MULTIVARIATE") {
-    return undefined;
+  if (flagData.overridden) {
+    return { value: undefined, reason: "STATIC" };
+  }
+
+  if (!flagData.is_enabled) {
+    return { value: undefined, reason: "DISABLED" };
   }
 
   const variants = flagData.variants ?? [];
-  if (variants.length === 0) {
-    return undefined;
+  if (flagData.flag_type !== "MULTIVARIATE" || variants.length === 0) {
+    return { value: undefined, reason: "DEFAULT" };
   }
 
   const userId = context["user_id"];
@@ -227,15 +271,15 @@ export function evaluateVariant(
       // null means "no percentage given", which behaves like the documented
       // default of 100: every bucket value satisfies "< 100", so no hash --
       // and no user_id -- is needed here.
-      return rule.rollout_variant;
+      return { value: rule.rollout_variant, reason: "TARGETING_MATCH" };
     }
 
     if (userId === undefined || userId === null) {
-      return variants.find((v) => v.is_control)?.name;
+      return controlVariant(variants);
     }
 
     if (hashBucket(userId, flagData.key) < rule.rollout_percentage) {
-      return rule.rollout_variant;
+      return { value: rule.rollout_variant, reason: "TARGETING_MATCH" };
     }
 
     break;

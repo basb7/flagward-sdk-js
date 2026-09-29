@@ -1,7 +1,7 @@
 {
-  "name": "@flagward/core",
-  "version": "0.4.0",
-  "description": "Framework-agnostic core for the Flagward SDKs: client, rule evaluation, and reporting",
+  "name": "@flagward/openfeature-web",
+  "version": "0.1.0",
+  "description": "OpenFeature web provider for Flagward - Feature Flags as a Service",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,11 +22,13 @@
     "lint": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
-    "prepublishOnly": "npm run lint && npm run test:run && npm run build"
+    "prepublishOnly": "npm run build --prefix ../core && npm run lint && npm run test:run && npm run build"
   },
   "keywords": [
     "feature-flags",
     "flags",
+    "openfeature",
+    "openfeature-provider",
     "sdk",
     "flagward"
   ],
@@ -34,17 +36,25 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/basb7/flagward-sdk-js.git",
-    "directory": "packages/core"
+    "directory": "packages/openfeature-web"
   },
-  "homepage": "https://github.com/basb7/flagward-sdk-js/tree/main/packages/core#readme",
+  "homepage": "https://github.com/basb7/flagward-sdk-js/tree/main/packages/openfeature-web#readme",
   "bugs": {
     "url": "https://github.com/basb7/flagward-sdk-js/issues"
   },
   "publishConfig": {
     "access": "public"
   },
+  "dependencies": {
+    "@flagward/core": "^0.4.0"
+  },
+  "peerDependencies": {
+    "@openfeature/web-sdk": "^1.10.0"
+  },
   "devDependencies": {
-    "@types/node": "^22.20.1",
+    "@openfeature/core": "^1.12.0",
+    "@openfeature/web-sdk": "^1.10.0",
+    "@types/node": "^22.0.0",
     "jsdom": "^25.0.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"

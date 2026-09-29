@@ -58,4 +58,22 @@ export interface FlagData {
  */
 export type FlagMap = Record<string, boolean>;
 export type FlagDataMap = Record<string, FlagData>;
+
+/**
+ * Why an evaluation produced its value. The names match OpenFeature's standard
+ * resolution reasons, so a provider can pass them through unchanged.
+ *
+ * - `DISABLED`: the flag is off.
+ * - `STATIC`: the value does not depend on the user -- an override, or an
+ *   enabled flag with nothing to target.
+ * - `TARGETING_MATCH`: a rule matched and decided the value.
+ * - `SPLIT`: the user's hash bucket picked the variant.
+ * - `DEFAULT`: nothing targeted the user, so the fallback applies.
+ */
+export type EvaluationReason = "DISABLED" | "STATIC" | "TARGETING_MATCH" | "SPLIT" | "DEFAULT";
+
+export interface EvaluationDetail<T> {
+  value: T;
+  reason: EvaluationReason;
+}
 export type UserContext = Record<string, unknown>;
