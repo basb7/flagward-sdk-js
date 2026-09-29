@@ -83,8 +83,12 @@ export class FlagwardWebProvider implements Provider {
   }
 
   async initialize(): Promise<void> {
-    // Rejects when the flags cannot be loaded, which OpenFeature reports as the
-    // provider's ERROR state.
+    // No PROVIDER_READY or PROVIDER_ERROR is emitted here, on purpose. The
+    // spec's hardening draft (2.8.2, 2.8.3) makes the provider their sole
+    // source, but @openfeature/web-sdk still derives both from how this
+    // promise settles and emits them itself. Emitting them too would run every
+    // handler twice. Revisit when the SDK adopts that part of the spec; a test
+    // counts the handler calls.
     await this.client.init();
 
     this.unsubscribe = this.client.subscribe(() => {

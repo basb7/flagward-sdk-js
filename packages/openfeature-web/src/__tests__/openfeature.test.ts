@@ -105,6 +105,33 @@ describe("through the OpenFeature web SDK", () => {
     expect(client.getBooleanValue("new-checkout", true)).toBe(true);
   });
 
+  it("runs READY handlers exactly once", async () => {
+    const ready = vi.fn();
+    OpenFeature.addHandler(ProviderEvents.Ready, ready);
+    OpenFeature.getClient().addHandler(ProviderEvents.Ready, ready);
+
+    await OpenFeature.setProviderAndWait(new FlagwardWebProvider({ apiKey: "key" }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // A handler added while the no-op provider is READY runs at once, so only
+    // this provider's events count: one from the API emitter, one from the
+    // client's. A READY emitted by the provider itself would make it four.
+    const fromFlagward = ready.mock.calls.filter(([details]) => details?.providerName === "flagward");
+    expect(fromFlagward).toHaveLength(2);
+  });
+
+  it("runs ERROR handlers exactly once when the flags cannot be loaded", async () => {
+    fetchMock.mockImplementation(async () => ({ ok: false, status: 401, statusText: "Unauthorized" }));
+    const failed = vi.fn();
+    OpenFeature.getClient().addHandler(ProviderEvents.Error, failed);
+
+    await expect(OpenFeature.setProviderAndWait(new FlagwardWebProvider({ apiKey: "bad" }))).rejects.toThrow();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const fromFlagward = failed.mock.calls.filter(([details]) => details?.providerName === "flagward");
+    expect(fromFlagward).toHaveLength(1);
+  });
+
   it("tells handlers when a flag changes", async () => {
     const provider = new FlagwardWebProvider({ apiKey: "key" });
     await OpenFeature.setProviderAndWait(provider);
