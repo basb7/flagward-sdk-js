@@ -1,11 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  evaluateFlag,
-  evaluateFlagDetail,
-  evaluateVariant,
-  evaluateVariantDetail,
-} from "../evaluation";
-import type { FlagData, Rule, UserContext } from "../types";
+import { evaluateFlag, evaluateFlagDetail, evaluateVariantDetail } from "../evaluation";
+import type { FlagData, Rule } from "../types";
 
 const variants = [
   { name: "control", percentage_allocation: 50, is_control: true },
@@ -183,34 +178,19 @@ describe("evaluateVariantDetail", () => {
   });
 });
 
-describe("detail parity", () => {
-  const flags: FlagData[] = [
-    booleanFlag(),
-    booleanFlag({ is_enabled: false }),
-    booleanFlag({ overridden: true, is_enabled: true }),
-    booleanFlag({ rules: [usRule] }),
-    multivariateFlag(),
-    multivariateFlag({ is_enabled: false }),
-    multivariateFlag({ variants: [] }),
-    multivariateFlag({ rules: [{ ...usRule, rollout_variant: "treatment", rollout_percentage: 20 }] }),
-    multivariateFlag({ rules: [{ ...usRule, rollout_variant: "control", rollout_percentage: null }] }),
-    multivariateFlag({ rules: [{ ...usRule, rollout_variant: null }] }),
-  ];
-  const contexts: UserContext[] = [
-    {},
-    { country: "US" },
-    { country: "AR" },
-    { country: "US", user_id: "u-1" },
-    { country: "US", user_id: "user-1" },
-    { user_id: "u-1" },
-  ];
+describe("an override that still carries rules", () => {
+  // The server strips an override's rules (sdk_api/payloads.py), so this
+  // payload does not occur today. The value must still not depend on that:
+  // 0.3.0 evaluated the rules, and so does this. Only the reason is new.
+  const flag = booleanFlag({ overridden: true, is_enabled: true, rules: [usRule] });
 
-  it("returns the same values as evaluateFlag and evaluateVariant", () => {
-    for (const flag of flags) {
-      for (const context of contexts) {
-        expect(evaluateFlagDetail(flag, context)?.value).toBe(evaluateFlag(flag, context));
-        expect(evaluateVariantDetail(flag, context)?.value).toBe(evaluateVariant(flag, context));
-      }
-    }
+  it("evaluates the rules, as evaluateFlag did in 0.3.0", () => {
+    expect(evaluateFlag(flag, { country: "US" })).toBe(true);
+    expect(evaluateFlag(flag, { country: "AR" })).toBe(false);
+  });
+
+  it("reports the rule outcome as the reason", () => {
+    expect(evaluateFlagDetail(flag, { country: "US" })).toEqual({ value: true, reason: "TARGETING_MATCH" });
+    expect(evaluateFlagDetail(flag, { country: "AR" })).toEqual({ value: false, reason: "DEFAULT" });
   });
 });

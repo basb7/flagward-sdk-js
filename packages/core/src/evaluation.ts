@@ -147,14 +147,12 @@ export function evaluateFlagDetail(
     return undefined;
   }
 
-  // The server strips an overridden flag's rules and forces is_enabled, so the
-  // value is fixed whatever the user.
-  if (flagData.overridden) {
-    return { value: flagData.is_enabled, reason: "STATIC" };
-  }
-
+  // An override only changes the reason, never the value. The server strips
+  // an overridden flag's rules and forces is_enabled, so the paths below
+  // already land on the forced value; one forced off reads STATIC rather
+  // than DISABLED because nobody turned the flag itself off.
   if (!flagData.is_enabled) {
-    return { value: false, reason: "DISABLED" };
+    return { value: false, reason: flagData.overridden ? "STATIC" : "DISABLED" };
   }
 
   if (flagData.flag_type === "MULTIVARIATE") {
