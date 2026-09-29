@@ -12,6 +12,7 @@ adapter per framework.
 | [`packages/vue`](packages/vue) | `@flagward/vue` | The Vue adapter: a plugin, `useFlag` and `useFlags`. |
 | [`packages/solid`](packages/solid) | `@flagward/solid` | The Solid adapter: a provider, `useFlag` and `useFlags`. |
 | [`packages/svelte`](packages/svelte) | `@flagward/svelte` | The Svelte adapter: `setFlagward`, `useFlag` and `useFlags`, built on `svelte/store`. |
+| [`packages/openfeature-web`](packages/openfeature-web) | `@flagward/openfeature-web` | An [OpenFeature](https://openfeature.dev) web provider, for applications that evaluate flags through `@openfeature/web-sdk`. |
 
 Every package also resolves MULTIVARIATE flags — `useVariant` in each adapter,
 or `client.getVariant` in the core — for A/B/n experiments and remote
@@ -65,6 +66,7 @@ npm publish -w @flagward/react
 npm publish -w @flagward/vue
 npm publish -w @flagward/solid
 npm publish -w @flagward/svelte
+npm publish -w @flagward/openfeature-web
 ```
 
 The adapters have no ordering constraint among themselves — none of them
@@ -99,7 +101,8 @@ the whole change. A test in each package compares the two, so a file edited by
 hand fails the suite rather than shipping a version nobody published.
 
 Each adapter also names itself: the core registers as `JAVASCRIPT`, and the
-adapters as `REACT`, `VUE`, `SOLID` and `SVELTE`. The server does not record
+adapters as `REACT`, `VUE`, `SOLID` and `SVELTE`. The OpenFeature provider
+registers as `OPENFEATURE_WEB`. The server does not record
 adapter types yet, so those arrive ahead of the schema on purpose — when it
 does, the applications already in the field are distinguishable without
 anybody reinstalling anything.
